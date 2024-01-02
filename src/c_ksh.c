@@ -3,17 +3,15 @@
 /*
  * built-in Korn commands: c_*
  */
-#include <sys/cdefs.h>
-
 #include <sys/stat.h>
 #include <ctype.h>
 
 #include "sh.h"
 
-int c_cd (wp) char** wp;
+int c_cd (char** wp)
 {
     int optc;
-    int physical = Flag(FPHYSICAL);
+    int physical = (int) Flag(FPHYSICAL);
     int cdnode;            /* was a node from cdpath added in? */
     int printpath = 0;        /* print where we cd'd? */
     int rval;
@@ -37,6 +35,8 @@ int c_cd (wp) char** wp;
                 break;
             case '?':
                 return 1;
+            default:
+                return -1;
         }
     }
     wp += builtin_opt.optind;
@@ -144,6 +144,7 @@ int c_cd (wp) char** wp;
         {
             bi_errorf("%s - %s", try, strerror(errno));
         }
+
         if (fdir)
         {
             afree(fdir, ATEMP);
@@ -189,6 +190,7 @@ int c_cd (wp) char** wp;
         pwd = Xstring(xs, xp);
         /* XXX unset $PWD? */
     }
+
     if (printpath || cdnode)
     {
         shprintf("%s\n", pwd);
@@ -202,10 +204,10 @@ int c_cd (wp) char** wp;
     return 0;
 }
 
-int c_pwd (wp) char** wp;
+int c_pwd (char** wp)
 {
     int optc;
-    int physical = Flag(FPHYSICAL);
+    int physical = (int) Flag(FPHYSICAL);
     char* p, * freep = NULL;
 
     while ((optc = ksh_getopt(wp, &builtin_opt, "LP")) != EOF)
@@ -220,6 +222,8 @@ int c_pwd (wp) char** wp;
                 break;
             case '?':
                 return 1;
+            default:
+                return -1;
         }
     }
     wp += builtin_opt.optind;
@@ -255,7 +259,7 @@ int c_pwd (wp) char** wp;
     return 0;
 }
 
-int c_print (wp) char** wp;
+int c_print (char** wp)
 {
 #define PO_NL        BIT(0)    /* print newline */
 #define PO_EXPAND    BIT(1)    /* expand backslash sequences */
@@ -362,6 +366,8 @@ int c_print (wp) char** wp;
                     break;
                 case '?':
                     return 1;
+                default:
+                    return -1;
             }
         }
         if (!(builtin_opt.info & GI_MINUSMINUS))
@@ -383,7 +389,7 @@ int c_print (wp) char** wp;
 
     while (*wp != NULL)
     {
-        int c;
+        char c;
         s = *wp;
         while ((c = *s++) != '\0')
         {
@@ -529,7 +535,7 @@ int c_print (wp) char** wp;
     return 0;
 }
 
-int c_whence (wp) char** wp;
+int c_whence (char** wp)
 {
     struct tbl* tp;
     char* id;
@@ -555,6 +561,8 @@ int c_whence (wp) char** wp;
                 break;
             case '?':
                 return 1;
+            default:
+                return -1;
         }
     }
     wp += builtin_opt.optind;
@@ -690,7 +698,7 @@ int c_whence (wp) char** wp;
 }
 
 /* Deal with command -vV - command -p dealt with in comexec() */
-int c_command (wp) char** wp;
+int c_command (char** wp)
 {
     /* Let c_whence do the work.  Note that c_command() must be
      * a distinct function from c_whence() (tested in comexec()).
@@ -699,7 +707,7 @@ int c_command (wp) char** wp;
 }
 
 /* typeset, export, and readonly */
-int c_typeset (wp) char** wp;
+int c_typeset (char** wp)
 {
     struct block* l = e->loc;
     struct tbl* vp, ** p;
@@ -794,7 +802,10 @@ int c_typeset (wp) char** wp;
                 break;
             case '?':
                 return 1;
+            default:
+                return -1;
         }
+
         if (builtin_opt.info & GI_PLUS)
         {
             fclr |= flag;
@@ -1079,7 +1090,7 @@ int c_typeset (wp) char** wp;
     return 0;
 }
 
-int c_alias (wp) char** wp;
+int c_alias (char** wp)
 {
     struct table* t = &aliases;
     int rv = 0, rflag = 0, tflag, Uflag = 0, pflag = 0;
@@ -1115,6 +1126,8 @@ int c_alias (wp) char** wp;
                 break;
             case '?':
                 return 1;
+            default:
+                return -1;
         }
     }
     wp += builtin_opt.optind;
@@ -1178,7 +1191,8 @@ int c_alias (wp) char** wp;
 
         if (val)
         {
-            alias = str_nsave(alias, val++ - alias, ATEMP);
+            alias = str_nsave(alias, val - alias, ATEMP);
+            val++;
         }
         h = hash(alias);
         if (val == NULL && !tflag && !xflag)
@@ -1245,7 +1259,7 @@ int c_alias (wp) char** wp;
     return rv;
 }
 
-int c_unalias (wp) char** wp;
+int c_unalias (char** wp)
 {
     struct table* t = &aliases;
     struct tbl* ap;
@@ -1267,6 +1281,8 @@ int c_unalias (wp) char** wp;
                 break;
             case '?':
                 return 1;
+            default:
+                return -1;
         }
     }
     wp += builtin_opt.optind;
@@ -1306,7 +1322,8 @@ int c_unalias (wp) char** wp;
 }
 
 #ifdef KSH
-int c_let (wp) char** wp;
+
+int c_let (char** wp)
 {
     int rv = 1;
     long val;
@@ -1332,9 +1349,10 @@ int c_let (wp) char** wp;
     }
     return rv;
 }
+
 #endif /* KSH */
 
-int c_jobs (wp) char** wp;
+int c_jobs (char** wp)
 {
     int optc;
     int flag = 0;
@@ -1363,6 +1381,8 @@ int c_jobs (wp) char** wp;
                 break;
             case '?':
                 return 1;
+            default:
+                return -1;
         }
     }
     wp += builtin_opt.optind;
@@ -1395,7 +1415,8 @@ int c_jobs (wp) char** wp;
 }
 
 #ifdef JOBS
-int c_fgbg (wp) char** wp;
+
+int c_fgbg (char** wp)
 {
     int bg = strcmp(*wp, "bg") == 0;
     int UNINITIALIZED(rv);
@@ -1426,6 +1447,7 @@ int c_fgbg (wp) char** wp;
      */
     return (bg || Flag(FPOSIX)) ? 0 : rv;
 }
+
 #endif
 
 struct kill_info
@@ -1436,10 +1458,7 @@ struct kill_info
 static char* kill_fmt_entry ARGS((void *arg, int i, char *buf, int buflen));
 
 /* format a single kill item */
-static char* kill_fmt_entry (arg, i, buf, buflen) void* arg;
-                                                  int i;
-                                                  char* buf;
-                                                  int buflen;
+static char* kill_fmt_entry (void* arg, int i, char* buf, int buflen)
 {
     struct kill_info* ki = (struct kill_info*) arg;
 
@@ -1460,7 +1479,7 @@ static char* kill_fmt_entry (arg, i, buf, buflen) void* arg;
 }
 
 
-int c_kill (wp) char** wp;
+int c_kill (char** wp)
 {
     Trap* t = (Trap*) 0;
     char* p;
@@ -1497,6 +1516,8 @@ int c_kill (wp) char** wp;
                     break;
                 case '?':
                     return 1;
+                default:
+                    return -1;
             }
         }
         i = builtin_opt.optind;
@@ -1608,7 +1629,7 @@ int c_kill (wp) char** wp;
     return rv;
 }
 
-void getopts_reset (val) int val;
+void getopts_reset (int val)
 {
     if (val >= 1)
     {
@@ -1617,7 +1638,7 @@ void getopts_reset (val) int val;
     }
 }
 
-int c_getopts (wp) char** wp;
+int c_getopts (char** wp)
 {
     int argc;
     const char* options;
@@ -1739,47 +1760,6 @@ int c_getopts (wp) char** wp;
     return optc < 0 ? 1 : ret;
 }
 
-#ifdef EMACS
-int c_bind (wp) char** wp;
-{
-    int rv = 0, macro = 0, list = 0;
-    char* cp;
-    int optc;
-
-    while ((optc = ksh_getopt(wp, &builtin_opt, "lm")) != EOF)
-    {
-        switch (optc)
-        {
-            case 'l':
-                list = 1;
-                break;
-            case 'm':
-                macro = 1;
-                break;
-            case '?':
-                return 1;
-        }
-    }
-    wp += builtin_opt.optind;
-
-    /*	if (*wp == NULL)	*//* list all *//*
-		rv = x_bind(NULL, NULL, 0, list);*/
-
-    for (; *wp != NULL; wp++)
-    {
-        cp = strchr(*wp, '=');
-        if (cp != NULL)
-        {
-            *cp++ = '\0';
-        }
-        /*		if (x_bind(*wp, cp, macro, 0))
-                    rv = 1;*/
-    }
-
-    return rv;
-}
-#endif
-
 /* A leading = means assignments before command are kept;
  * a leading * means a POSIX special builtin;
  * a leading + means a POSIX regular builtin
@@ -1799,9 +1779,6 @@ const struct builtin kshbuiltins[] = {
         {"+unalias", c_unalias}, {"whence", c_whence},
 #ifdef JOBS
         {"+bg", c_fgbg}, {"+fg", c_fgbg},
-#endif
-#ifdef EMACS
-        {"bind", c_bind},
 #endif
         {NULL, NULL}
 };
