@@ -180,7 +180,7 @@ int include ARGS((const char *, int, char **, int));
 int command ARGS((const char *));
 int shell ARGS((Source *volatile, int volatile));
 void unwind ARGS((int)) GCC_FUNC_ATTR(noreturn);
-void newenv ARGS((int));
+void newenv ARGS((short));
 void quitenv ARGS((void));
 void cleanup_parents_env ARGS((void));
 void cleanup_proc_env ARGS((void));
