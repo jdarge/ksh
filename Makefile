@@ -45,8 +45,8 @@ CLEANFILES+=	ksh.1 ksh.1.tmp
 ksh.1: ksh.Man mkman
 	${_MKTARGET_CREATE}
 	${SCRIPT_ENV} \
-	${HOST_SH} $(.CURDIR)/mkman ksh $(.CURDIR)/ksh.Man >ksh.1.tmp \
-	    && mv ksh.1.tmp ksh.1
+  ${HOST_SH} $(.CURDIR)/mkman ksh $(.CURDIR)/ksh.Man >ksh.1.tmp &&
+  mv ksh.1.tmp ksh.1
 
 COPTS+=	${CC_WNO_IMPLICIT_FALLTHROUGH}
 

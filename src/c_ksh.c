@@ -5,10 +5,6 @@
  */
 #include <sys/cdefs.h>
 
-#ifndef lint
-__RCSID("$NetBSD: c_ksh.c,v 1.30 2021/09/16 19:43:33 christos Exp $");
-#endif
-
 #include <sys/stat.h>
 #include <ctype.h>
 
@@ -915,7 +911,7 @@ c_alias(wp)
 			return 1;
 		}
 		ksh_getopt_reset(&builtin_opt, GF_ERROR);
-		return c_unalias((char **)__UNCONST(args));
+		return c_unalias((char **)(args));
 	}
 
 	
@@ -1096,14 +1092,14 @@ c_jobs(wp)
 			return 1;
 		}
 	wp += builtin_opt.optind;
-	if (Zflag) {
+/*	if (Zflag) {
 		if (*wp && **wp) {
 			setproctitle("%s", *wp);
 		} else {
 			setproctitle(NULL);
 		}
 		return 0;
-	}
+	}*/
 	if (!*wp) {
 		if (j_jobs((char *) 0, flag, nflag))
 			rv = 1;
@@ -1417,15 +1413,15 @@ c_bind(wp)
 		}
 	wp += builtin_opt.optind;
 
-	if (*wp == NULL)	/* list all */
-		rv = x_bind(NULL, NULL, 0, list);
+/*	if (*wp == NULL)	*//* list all *//*
+		rv = x_bind(NULL, NULL, 0, list);*/
 
 	for (; *wp != NULL; wp++) {
 		cp = strchr(*wp, '=');
 		if (cp != NULL)
 			*cp++ = '\0';
-		if (x_bind(*wp, cp, macro, 0))
-			rv = 1;
+        /*		if (x_bind(*wp, cp, macro, 0))
+                    rv = 1;*/
 	}
 
 	return rv;

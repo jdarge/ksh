@@ -9,11 +9,6 @@
 #include <locale.h>
 #include <time.h>
 
-#ifndef lint
-__RCSID("$NetBSD: main.c,v 1.23 2018/05/08 16:37:59 kamil Exp $");
-#endif
-
-
 #define	EXTERN				/* define EXTERNs in sh.h */
 
 #include "sh.h"
@@ -108,7 +103,7 @@ main(int argc, char *argv[])
 					    "pdksh", (char *) 0
 					};
 
-		argv = (char **)__UNCONST(empty_argv);
+		argv = (char **)(empty_argv);
 		argc = 1;
 	}
 	kshname = *argv;
@@ -254,7 +249,7 @@ main(int argc, char *argv[])
 	setstr(global(version_param), ksh_version, KSH_RETURN_ERROR);
 
 	/* execute initialization statements */
-	for (wp = (char**)__UNCONST(initcoms); *wp != NULL; wp++) {
+	for (wp = (char**)(initcoms); *wp != NULL; wp++) {
 		shcomexec(wp);
 		for (; *wp != NULL; wp++)
 			;
@@ -329,16 +324,10 @@ main(int argc, char *argv[])
 	i = Flag(FMONITOR) != 127;
 	Flag(FMONITOR) = 0;
 	j_init(i);
-#ifdef EDIT
-	/* Do this after j_init(), as tty_fd is not initialized 'til then */
-	if (Flag(FTALKING))
-		x_init();
-#endif
-
 	l = e->loc;
 	l->argv = &argv[argi - 1];
 	l->argc = argc - argi;
-	l->argv[0] = (char *)__UNCONST(kshname);
+	l->argv[0] = (char *)(kshname);
 	getopts_reset(1);
 
 	/* Disable during .profile/ENV reading */
@@ -376,7 +365,7 @@ main(int argc, char *argv[])
 #ifdef DEFAULT_ENV
 		/* If env isn't set, include default environment */
 		if (env_file == null)
-			env_file = __UNCONST(DEFAULT_ENV);
+			env_file = (DEFAULT_ENV);
 #endif /* DEFAULT_ENV */
 		env_file = substitute(env_file, DOTILDE);
 		if (*env_file != '\0')
@@ -394,7 +383,7 @@ main(int argc, char *argv[])
 						    "ENV", "SHELL",
 						(char *) 0
 					    };
-		shcomexec((char **)__UNCONST(restr_com));
+		shcomexec((char **)(restr_com));
 		/* After typeset command... */
 		Flag(FRESTRICTED) = 1;
 	}

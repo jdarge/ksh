@@ -4,8 +4,8 @@
 /* $NetBSD: ksh_dir.h,v 1.2 1997/01/12 19:11:59 tls Exp $ */
 
 #if defined(HAVE_DIRENT_H)
-# include <dirent.h>
-# define NLENGTH(dirent)	(strlen(dirent->d_name))
+#include <dirent.h>
+#define NLENGTH(dirent) (strlen(dirent->d_name))
 #else
 # define dirent direct
 # define NLENGTH(dirent)	(dirent->d_namlen)
@@ -23,5 +23,5 @@
 #ifdef OPENDIR_DOES_NONDIR
 extern DIR *ksh_opendir ARGS((const char *d));
 #else /* OPENDIR_DOES_NONDIR */
-# define ksh_opendir(d)	opendir(d)
+# define ksh_opendir(d) opendir(d)
 #endif /* OPENDIR_DOES_NONDIR */

@@ -28,7 +28,7 @@
 #define SYS_SIGLIST_DECLARED 1
 
 /* Define as the return value of signal handlers (0 or ).  */
-#define RETSIGVAL 
+#define RETSIGVAL
 
 /* Define if you have bsd versions of the setpgrp() and getpgrp() routines */
 /* #undef BSD_PGRP */
@@ -98,7 +98,7 @@
 #define POSIXLY_CORRECT 1
 
 /* Specify default $ENV? */
-#define DEFAULT_ENV	"$HOME/.kshrc"
+#define DEFAULT_ENV    "$HOME/.kshrc"
 
 /* Include shl(1) support? */
 /* #undef SWTCH */

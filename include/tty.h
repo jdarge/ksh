@@ -32,17 +32,21 @@
 # define SYS_IOCTL_WITH_TERMIO
 #endif /* SYS_IOCTL_WITH_TERMIO */
 
-#ifdef	HAVE_TERMIOS_H
+#ifdef    HAVE_TERMIOS_H
+
 # include <termios.h>
+
 # ifdef SYS_IOCTL_WITH_TERMIOS
 #  if !(defined(sun) && !defined(__svr4__)) /* too many warnings on sunos */
-    /* Need to include sys/ioctl.h on some systems to get the TIOCGWINSZ
-     * stuff (eg, digital unix).
-     */
+/* Need to include sys/ioctl.h on some systems to get the TIOCGWINSZ
+ * stuff (eg, digital unix).
+ */
 #   include <sys/ioctl.h>
 #  endif /* !(sun && !__svr4__) */
 # endif /* SYS_IOCTL_WITH_TERMIOS */
+
 typedef struct termios TTY_state;
+
 #else
 # ifdef HAVE_TERMIO_H
 #  include <termio.h>
@@ -75,13 +79,13 @@ typedef struct termio TTY_state;
 #   include <sys/ioctl.h>
 #  endif
 typedef struct {
-	struct sgttyb	sgttyb;
+    struct sgttyb	sgttyb;
 #  ifdef TIOCGATC
-	struct lchars	lchars;
+    struct lchars	lchars;
 #  else /* TIOCGATC */
-	struct tchars	tchars;
+    struct tchars	tchars;
 #   ifdef TIOCGLTC
-	struct ltchars	ltchars;
+    struct ltchars	ltchars;
 #   endif /* TIOCGLTC */
 #  endif /* TIOCGATC */
 } TTY_state;
@@ -89,18 +93,18 @@ typedef struct {
 #endif /* HAVE_TERMIOS_H */
 
 /* Flags for set_tty() */
-#define TF_NONE		0x00
-#define TF_WAIT		0x01	/* drain output, even it requires sleep() */
-#define TF_MIPSKLUDGE	0x02	/* kludge to unwedge RISC/os 5.0 tty driver */
+#define TF_NONE        0x00
+#define TF_WAIT        0x01    /* drain output, even it requires sleep() */
+#define TF_MIPSKLUDGE    0x02    /* kludge to unwedge RISC/os 5.0 tty driver */
 
-EXTERN int		tty_fd I__(-1);	/* dup'd tty file descriptor */
-EXTERN int		tty_devtty;	/* true if tty_fd is from /dev/tty */
-EXTERN TTY_state	tty_state;	/* saved tty state */
+EXTERN int tty_fd I__(-1);    /* dup'd tty file descriptor */
+EXTERN int tty_devtty;    /* true if tty_fd is from /dev/tty */
+EXTERN TTY_state tty_state;    /* saved tty state */
 
-extern int	get_tty ARGS((int fd, TTY_state *ts));
-extern int	set_tty ARGS((int fd, TTY_state *ts, int flags));
-extern void	tty_init ARGS((int init_ttystate));
-extern void	tty_close ARGS((void));
+extern int get_tty ARGS((int fd, TTY_state *ts));
+extern int set_tty ARGS((int fd, TTY_state *ts, int flags));
+extern void tty_init ARGS((int init_ttystate));
+extern void tty_close ARGS((void));
 
 /* be sure not to interfere with anyone else's idea about EXTERN */
 #ifdef EXTERN_DEFINED
