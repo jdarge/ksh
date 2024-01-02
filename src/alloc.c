@@ -28,8 +28,6 @@
 /*
  * area-based allocation built on malloc/free
  */
-#include <sys/cdefs.h>
-
 #include "sh.h"
 
 struct link
