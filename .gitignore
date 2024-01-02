@@ -1,4 +1,3 @@
-siglist.out
-siglist.out.tmp
 build/
-
+cmake-build-debug/
+.idea/
