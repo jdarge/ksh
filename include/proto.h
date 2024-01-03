@@ -205,7 +205,7 @@ const unsigned char* pat_scan ARGS((const unsigned char *, const unsigned char *
 void qsortp ARGS((void **, size_t, int (*)(void *, void *)));
 int xstrcmp ARGS((void *, void *));
 void ksh_getopt_reset ARGS((Getopt * , int));
-int ksh_getopt ARGS((char **, Getopt *, const char *));
+char ksh_getopt ARGS((char **, Getopt *, const char *));
 void print_value_quoted ARGS((const char *));
 void print_columns ARGS((struct shf *, int, char *(*)(void *, int, char *, int), void *, int, int));
 int strip_nuls ARGS((char *, int));

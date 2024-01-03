@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #include "sh.h"
-#include <ctype.h>    /* for FILECHCONV */
+#include "proto.h"
 #include <limits.h>
 
 #ifndef UCHAR_MAX
@@ -1098,9 +1098,7 @@ void ksh_getopt_reset (go, flags) Getopt* go;
  *	  option starting with + is accepted, the GI_PLUS flag will be set
  *	  in go->info.
  */
-int ksh_getopt (argv, go, options) char** argv;
-                                   Getopt* go;
-                                   const char* options;
+char ksh_getopt (char** argv, Getopt* go, const char* options)
 {
     char c;
     char* o;

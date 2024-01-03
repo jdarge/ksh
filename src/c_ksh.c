@@ -10,7 +10,7 @@
 
 int c_cd (char** wp)
 {
-    int optc;
+    char optc;
     int physical = (int) Flag(FPHYSICAL);
     int cdnode;            /* was a node from cdpath added in? */
     int printpath = 0;        /* print where we cd'd? */
@@ -77,7 +77,7 @@ int c_cd (char** wp)
     else if (!wp[2])
     {
         /* Two arguments - substitute arg1 in PWD for arg2 */
-        int ilen, olen, nlen, elen;
+        unsigned ilen, olen, nlen, elen;
         char* cp;
 
         if (!current_wd[0])
@@ -116,6 +116,7 @@ int c_cd (char** wp)
      * so that if it's used, it will cause a dump
      */
     xp = (char*) 0;
+    (void) xp; /* stop unused warning */
 
     cdpath = str_val(global("CDPATH"));
     do
@@ -206,7 +207,7 @@ int c_cd (char** wp)
 
 int c_pwd (char** wp)
 {
-    int optc;
+    char optc;
     int physical = (int) Flag(FPHYSICAL);
     char* p, * freep = NULL;
 
@@ -321,7 +322,7 @@ int c_print (char** wp)
     }
     else
     {
-        int optc;
+        char optc;
         const char* options = "Rnprsu,";
         while ((optc = ksh_getopt(wp, &builtin_opt, options)) != EOF)
         {
@@ -438,7 +439,7 @@ int c_print (char** wp)
                         {
                             if (*s >= '0' && *s <= '7')
                             {
-                                c = c * 8 + *s++ - '0';
+                                c = (char) (c * 8 + *s++ - '0');
                             }
                             else
                             {
@@ -473,7 +474,7 @@ int c_print (char** wp)
     }
     else
     {
-        int n, len = Xlength(xs, xp);
+        unsigned n, len = Xlength(xs, xp);
         int UNINITIALIZED(opipe);
 #ifdef KSH
 
@@ -541,7 +542,7 @@ int c_whence (char** wp)
     char* id;
     int pflag = 0, vflag = 0, Vflag = 0;
     int ret = 0;
-    int optc;
+    char optc;
     int iam_whence = wp[0][0] == 'w';
     int fcflags;
     const char* options = iam_whence ? "pv" : "pvV";
@@ -712,11 +713,12 @@ int c_typeset (char** wp)
     struct block* l = e->loc;
     struct tbl* vp, ** p;
     Tflag fset = 0, fclr = 0;
-    int thing = 0, func = 0, localv = 0;
+    int func = 0, localv = 0;
+    unsigned thing = 0;
     const char* options = "L#R#UZ#fi#lprtux";    /* see comment below */
     char* fieldstr, * basestr;
     int field, base;
-    int optc;
+    char optc;
     Tflag flag;
     int pflag = 0;
 
@@ -835,7 +837,7 @@ int c_typeset (char** wp)
             wp[builtin_opt.optind][0] == '-' || wp[builtin_opt.optind][0] == '+'
     ) && wp[builtin_opt.optind][1] == '\0')
     {
-        thing = wp[builtin_opt.optind][0];
+        thing = (unsigned char) wp[builtin_opt.optind][0];
         builtin_opt.optind++;
     }
 
@@ -1094,9 +1096,9 @@ int c_alias (char** wp)
 {
     struct table* t = &aliases;
     int rv = 0, rflag = 0, tflag, Uflag = 0, pflag = 0;
-    int prefix = 0;
+    unsigned prefix = 0;
     Tflag xflag = 0;
-    int optc;
+    char optc;
 
     builtin_opt.flags |= GF_PLUSOPT;
     while ((optc = ksh_getopt(wp, &builtin_opt, "dprtUx")) != EOF)
@@ -1135,7 +1137,7 @@ int c_alias (char** wp)
     if (!(builtin_opt.info & GI_MINUSMINUS) && *wp && (wp[0][0] == '-' || wp[0][0] == '+') &&
         wp[0][1] == '\0')
     {
-        prefix = wp[0][0];
+        prefix = (unsigned char) (wp[0][0]);
         wp++;
     }
 
@@ -1187,12 +1189,11 @@ int c_alias (char** wp)
         char* val = strchr(alias, '=');
         char* newval;
         struct tbl* ap;
-        int h;
+        unsigned h;
 
         if (val)
         {
-            alias = str_nsave(alias, val - alias, ATEMP);
-            val++;
+            alias = str_nsave(alias, (int) (val++ - alias), ATEMP);
         }
         h = hash(alias);
         if (val == NULL && !tflag && !xflag)
@@ -1264,7 +1265,7 @@ int c_unalias (char** wp)
     struct table* t = &aliases;
     struct tbl* ap;
     int rv = 0, all = 0;
-    int optc;
+    char optc;
 
     while ((optc = ksh_getopt(wp, &builtin_opt, "adt")) != EOF)
     {
@@ -1354,10 +1355,10 @@ int c_let (char** wp)
 
 int c_jobs (char** wp)
 {
-    int optc;
+    char optc;
     int flag = 0;
     int nflag = 0;
-    int Zflag = 0;
+    /* int Zflag = 0; */
     int rv = 0;
 
     while ((optc = ksh_getopt(wp, &builtin_opt, "lpnzZ")) != EOF)
@@ -1377,7 +1378,7 @@ int c_jobs (char** wp)
                 nflag = -1;
                 break;
             case 'Z':
-                Zflag = 1;
+                /* Zflag = 1; */
                 break;
             case '?':
                 return 1;
@@ -1498,7 +1499,7 @@ int c_kill (char** wp)
     }
     else
     {
-        int optc;
+        char optc;
 
         while ((optc = ksh_getopt(wp, &builtin_opt, "ls:")) != EOF)
         {
@@ -1570,6 +1571,7 @@ int c_kill (char** wp)
         else
         {
             int w, si;
+            unsigned long w_tmp; /* used to check int length */
             int mess_width;
             struct kill_info ki;
 
@@ -1580,12 +1582,17 @@ int c_kill (char** wp)
             ki.name_width = mess_width = 0;
             for (si = 0; si < SIGNALS; si++)
             {
-                w = sigtraps[si].name ? (int) strlen(sigtraps[si].name) : ki.num_width;
+                w_tmp = strlen(sigtraps[si].name);
+                w = sigtraps[si].name ? ((w_tmp <= INT_MAX) ? (int) w_tmp : -1) : ki.num_width;
+
                 if (w > ki.name_width)
                 {
                     ki.name_width = w;
                 }
-                w = strlen(sigtraps[si].mess);
+
+                w_tmp = strlen(sigtraps[si].mess);
+                w = (w_tmp <= INT_MAX) ? (int) w_tmp : -1;
+
                 if (w > mess_width)
                 {
                     mess_width = w;
@@ -1643,7 +1650,7 @@ int c_getopts (char** wp)
     int argc;
     const char* options;
     const char* var;
-    int optc;
+    char optc;
     int ret;
     char buf[3];
     struct tbl* vq, * voptarg;
@@ -1714,7 +1721,7 @@ int c_getopts (char** wp)
         /* POSIX says var is set to ? at end-of-options, at&t ksh
          * sets it to null - we go with POSIX...
          */
-        buf[0] = optc < 0 ? '?' : optc;
+        buf[0] = (char) (optc >= 0 ? optc : '?');
         buf[1] = '\0';
     }
 
