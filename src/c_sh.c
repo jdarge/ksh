@@ -3,12 +3,8 @@
 /*
  * built-in Bourne commands
  */
-#include <sys/cdefs.h>
-
 #include <sys/stat.h>
-#include <sys/time.h>
 #include <sys/times.h>
-#include <time.h>
 #include <unistd.h>
 
 #include "sh.h"
@@ -16,15 +12,15 @@
 static char* clocktos ARGS((clock_t t));
 
 /* :, false and true */
-int c_label (wp) char** wp;
+int c_label (char** wp)
 {
     return wp[0][0] == 'f' ? 1 : 0;
 }
 
-int c_shift (wp) char** wp;
+int c_shift (char** wp)
 {
     struct block* l = e->loc;
-    int n;
+    long n;
     long val;
     char* arg;
 
@@ -55,17 +51,17 @@ int c_shift (wp) char** wp;
     }
     l->argv[n] = l->argv[0];
     l->argv += n;
-    l->argc -= n;
+    l->argc -= (int) n; /* todo: lazy cast */
     return 0;
 }
 
-int c_umask (wp) char** wp;
+int c_umask (char** wp)
 {
     int i;
     char* cp;
     int symbolic = 0;
-    int old_umask;
-    int optc;
+    unsigned old_umask;
+    char optc;
 
     while ((optc = ksh_getopt(wp, &builtin_opt, "S")) != EOF)
     {
@@ -76,6 +72,8 @@ int c_umask (wp) char** wp;
                 break;
             case '?':
                 return 1;
+            default:
+                return -1;
         }
     }
     cp = wp[builtin_opt.optind];
@@ -113,7 +111,7 @@ int c_umask (wp) char** wp;
     }
     else
     {
-        int new_umask;
+        unsigned new_umask;
 
         if (digit(*cp))
         {
@@ -130,7 +128,7 @@ int c_umask (wp) char** wp;
         else
         {
             /* symbolic format */
-            int positions, new_val;
+            unsigned positions, new_val;
             char op;
 
             old_umask = umask(0);
@@ -163,10 +161,13 @@ int c_umask (wp) char** wp;
                     positions = 0111;
                 } /* default is a */
                 if (!strchr("=+-", op = *cp))
+                {
                     break;
+                }
                 cp++;
                 new_val = 0;
                 while (*cp && strchr("rwxugoXs", *cp))
+                {
                     switch (*cp++)
                     {
                         case 'r':
@@ -179,21 +180,24 @@ int c_umask (wp) char** wp;
                             new_val |= 01;
                             break;
                         case 'u':
-                            new_val |= old_umask >> 6;
+                            new_val |= old_umask >> 6U;
                             break;
                         case 'g':
-                            new_val |= old_umask >> 3;
+                            new_val |= old_umask >> 3U;
                             break;
                         case 'o':
-                            new_val |= old_umask >> 0;
+                            new_val |= old_umask >> 0U;
                             break;
                         case 'X':
                             if (old_umask & 0111)
+                            {
                                 new_val |= 01;
+                            }
                             break;
                         case 's': /* ignored */
                             break;
                     }
+                }
                 new_val = (new_val & 07) * positions;
                 switch (op)
                 {
@@ -205,6 +209,9 @@ int c_umask (wp) char** wp;
                         break;
                     case '+':
                         new_umask |= new_val;
+                        break;
+                    default:
+                        return -1;
                 }
                 if (*cp == ',')
                 {
@@ -212,7 +219,9 @@ int c_umask (wp) char** wp;
                     cp++;
                 }
                 else if (!strchr("=+-", *cp))
+                {
                     break;
+                }
             }
             if (*cp)
             {
@@ -226,7 +235,7 @@ int c_umask (wp) char** wp;
     return 0;
 }
 
-int c_dot (wp) char** wp;
+int c_dot (char** wp)
 {
     char* file, * cp;
     char** argv;
@@ -273,7 +282,7 @@ int c_dot (wp) char** wp;
     return i;
 }
 
-int c_wait (wp) char** wp;
+int c_wait (char** wp)
 {
     int UNINITIALIZED(rv);
     int sig;
@@ -304,7 +313,7 @@ int c_wait (wp) char** wp;
     return rv;
 }
 
-int c_read (wp) char** wp;
+int c_read (char** wp)
 {
     int c = 0;
     int expandv = 1, history = 0;
@@ -313,7 +322,7 @@ int c_read (wp) char** wp;
     char* cp;
     int fd = 0;
     struct shf* shf;
-    int optc;
+    char optc;
     const char* emsg;
     XString cs, xs;
     struct tbl* vp;
@@ -352,6 +361,8 @@ int c_read (wp) char** wp;
                 break;
             case '?':
                 return 1;
+            default:
+                return -1;
         }
     }
     wp += builtin_opt.optind;
@@ -526,7 +537,7 @@ int c_read (wp) char** wp;
     return ecode ? ecode : c == EOF;
 }
 
-int c_eval (wp) char** wp;
+int c_eval (char** wp)
 {
     struct source* s;
     int rv;
@@ -571,7 +582,7 @@ int c_eval (wp) char** wp;
     return rv;
 }
 
-int c_trap (wp) char** wp;
+int c_trap (char** wp)
 {
     int i;
     char* s;
@@ -585,13 +596,13 @@ int c_trap (wp) char** wp;
 
     if (*wp == NULL)
     {
-        int anydfl = 0;
+        /* int anydfl = 0; */ /* assigned but unused */
 
         for (p = sigtraps, i = SIGNALS + 1; --i >= 0; p++)
         {
             if (p->trap == NULL)
             {
-                anydfl = 1;
+                /* anydfl = 1; */
             }
             else
             {
@@ -642,7 +653,7 @@ int c_trap (wp) char** wp;
     return 0;
 }
 
-int c_exitreturn (wp) char** wp;
+int c_exitreturn (char** wp)
 {
     int how = LEXIT;
     int n;
@@ -692,10 +703,10 @@ int c_exitreturn (wp) char** wp;
     quitenv();    /* get rid of any i/o redirections */
     unwind(how);
     /*NOTREACHED*/
-    return 0;
+    /* return 0; */
 }
 
-int c_brkcont (wp) char** wp;
+int c_brkcont (char** wp)
 {
     int n, quit;
     struct env* ep, * last_ep = (struct env*) 0;
@@ -761,13 +772,14 @@ int c_brkcont (wp) char** wp;
 
     unwind(*wp[0] == 'b' ? LBREAK : LCONTIN);
     /*NOTREACHED*/
+    return 0;
 }
 
-int c_set (wp) char** wp;
+int c_set (char** wp)
 {
     int argi, setargs;
     struct block* l = e->loc;
-    char** owp = wp;
+    char** owp;
 
     if (wp[1] == NULL)
     {
@@ -789,7 +801,7 @@ int c_set (wp) char** wp;
         {
             *wp = str_save(*wp, &l->area);
         }
-        l->argc = wp - owp - 1;
+        l->argc = (int) (wp - owp - 1); /* todo: lazy cast */
         l->argv = (char**) alloc(sizeofN(char *, l->argc + 2), &l->area);
         for (wp = l->argv; (*wp++ = *owp++) != NULL;)
         {
@@ -804,10 +816,10 @@ int c_set (wp) char** wp;
     return Flag(FPOSIX) ? 0 : subst_exstat;
 }
 
-int c_unset (wp) char** wp;
+int c_unset (char** wp)
 {
     char* id;
-    int optc, unset_var = 1;
+    char optc, unset_var = 1;
     int ret = 0;
 
     while ((optc = ksh_getopt(wp, &builtin_opt, "fv")) != EOF)
@@ -822,6 +834,8 @@ int c_unset (wp) char** wp;
                 break;
             case '?':
                 return 1;
+            default:
+                return -1;
         }
     }
     wp += builtin_opt.optind;
@@ -849,8 +863,9 @@ int c_unset (wp) char** wp;
     return ret;
 }
 
-int c_times (wp) char** wp;
+int c_times (char** wp)
 {
+    (void) wp; /* todo: lazy use*/
     struct tms all;
 
     times(&all);
@@ -865,8 +880,7 @@ int c_times (wp) char** wp;
 /*
  * time pipeline (really a statement, not a built-in command)
  */
-int timex (t, f) struct op* t;
-                 int f;
+int timex (struct op* t, int f)
 {
 #define TF_NOARGS    BIT(0)
 #define TF_NOREAL    BIT(1)        /* don't report real time */
@@ -927,11 +941,10 @@ int timex (t, f) struct op* t;
     return rv;
 }
 
-void timex_hook (t, app) struct op* t;
-                         char** volatile* app;
+void timex_hook (struct op* t, char** volatile* app)
 {
     char** wp = *app;
-    int optc;
+    char optc;
     int i, j;
     Getopt opt;
 
@@ -948,6 +961,8 @@ void timex_hook (t, app) struct op* t;
                 errorf("time: -%s unknown option", opt.optarg);
             case ':':
                 errorf("time: -%s requires an argument", opt.optarg);
+            default:
+                errorf("time: unknown error");
         }
     }
     /* Copy command words down over options. */
@@ -968,7 +983,7 @@ void timex_hook (t, app) struct op* t;
     *app = wp;
 }
 
-static char* clocktos (t) clock_t t;
+static char* clocktos (clock_t t)
 {
     static char temp[22]; /* enough for 64 bit clock_t */
     int i;
@@ -990,15 +1005,16 @@ static char* clocktos (t) clock_t t;
         {
             *--cp = '.';
         }
-        *--cp = '0' + (char) (t % 10);
+        *--cp = (char) ('0' + (t % 10));
         t /= 10;
     }
     return cp;
 }
 
 /* exec with no args - args case is taken care of in comexec() */
-int c_exec (wp) char** wp;
+int c_exec (char** wp)
 {
+    (void) wp; /* todo: lazy use */
     int i;
 
     /* make sure redirects stay in place */
@@ -1029,13 +1045,11 @@ int c_exec (wp) char** wp;
 }
 
 /* dummy function, special case in comexec() */
-int c_builtin (wp) char** wp;
+int c_builtin (char** wp)
 {
+    (void) wp; /* todo: lazy use */
     return 0;
 }
-
-extern int c_test ARGS((char **wp));        /* in c_test.c */
-extern int c_ulimit ARGS((char **wp));        /* in c_ulimit.c */
 
 /* A leading = means assignments before command are kept;
  * a leading * means a POSIX special builtin;
