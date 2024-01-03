@@ -17,9 +17,6 @@
 	the extended 4.nBSD resource limits.  It now includes the code
 	that was originally under case SYSULIMIT in source file "xec.c".
 */
-#include <sys/cdefs.h>
-
-#include <sys/time.h>
 #include <time.h>
 
 #include "sh.h"
@@ -43,7 +40,7 @@ extern	long ulimit();
 # define KSH_RLIM_INFINITY ((rlim_t) 1 << (sizeof(rlim_t) * 8 - 1) - 1)
 #endif /* RLIM_INFINITY */
 
-int c_ulimit (wp) char** wp;
+int c_ulimit (char** wp)
 {
     static const struct limits
     {
@@ -129,7 +126,7 @@ int c_ulimit (wp) char** wp;
     int how = SOFT | HARD;
     const struct limits* l;
     int set, all = 0;
-    int optc, what;
+    char optc, what;
 #ifdef HAVE_SETRLIMIT
     struct rlimit limit;
 #endif /* HAVE_SETRLIMIT */
