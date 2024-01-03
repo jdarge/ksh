@@ -474,7 +474,8 @@ int c_print (char** wp)
     }
     else
     {
-        unsigned n, len = Xlength(xs, xp);
+        unsigned len = Xlength(xs, xp);
+        long n;
         int UNINITIALIZED(opipe);
 #ifdef KSH
 
