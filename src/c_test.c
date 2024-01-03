@@ -8,8 +8,6 @@
  * modified by Michael Rendell to add Korn's [[ .. ]] expressions.
  * modified by J.T. Conklin to add POSIX compatibility.
  */
-#include <sys/cdefs.h>
-
 #include <sys/stat.h>
 
 #include "sh.h"
@@ -94,7 +92,7 @@ static int ptest_eval ARGS((Test_env * , Test_op, const char *,
                                    const char *, int));
 static void ptest_error ARGS((Test_env * , int, const char *));
 
-int c_test (wp) char** wp;
+int c_test (char** wp)
 {
     int argc;
     int res;
@@ -138,8 +136,9 @@ int c_test (wp) char** wp;
         {
             if ((*te.isa)(&te, TM_END))
             {
-                return !0;
+                return 1;
             }
+
             if (argc == 3)
             {
                 opnd1 = (*te.getopnd)(&te, TO_NONOP, 1);
@@ -160,6 +159,7 @@ int c_test (wp) char** wp;
                 /* back up to opnd1 */
                 te.pos.wp--;
             }
+
             if (argc == 1)
             {
                 opnd1 = (*te.getopnd)(&te, TO_NONOP, 1);
@@ -178,6 +178,7 @@ int c_test (wp) char** wp;
                 }
                 return !res;
             }
+
             if ((*te.isa)(&te, TM_NOT))
             {
                 invert++;
@@ -197,9 +198,7 @@ int c_test (wp) char** wp;
  * Generic test routines.
  */
 
-Test_op test_isop (te, meta, s) Test_env* te;
-                                Test_meta meta;
-                                const char* s;
+Test_op test_isop (Test_env* te, Test_meta meta, const char* s)
 {
     char sc1;
     const struct t_op* otab;
@@ -223,11 +222,7 @@ Test_op test_isop (te, meta, s) Test_env* te;
     return TO_NONOP;
 }
 
-int test_eval (te, op, opnd1, opnd2, do_eval) Test_env* te;
-                                              Test_op op;
-                                              const char* opnd1;
-                                              const char* opnd2;
-                                              int do_eval;
+int test_eval (Test_env* te, Test_op op, const char* opnd1, const char* opnd2, int do_eval)
 {
     int res;
     int not;
@@ -258,7 +253,7 @@ int test_eval (te, op, opnd1, opnd2, do_eval) Test_env* te;
             }
             else
             {
-                res = Flag(res);
+                res = (unsigned char) Flag(res);
                 if (not)
                 {
                     res = !res;
@@ -448,8 +443,7 @@ int test_eval (te, op, opnd1, opnd2, do_eval) Test_env* te;
     return 1;
 }
 
-static int test_stat (pathx, statb) const char* pathx;
-                                    struct stat* statb;
+static int test_stat (const char* pathx, struct stat* statb)
 {
     return stat(pathx, statb);
 }
@@ -457,8 +451,7 @@ static int test_stat (pathx, statb) const char* pathx;
 /* Routine to handle Korn's /dev/fd hack, and to deal with X_OK on
  * non-directories when running as root.
  */
-static int test_eaccess (pathx, mode) const char* pathx;
-                                      int mode;
+static int test_eaccess (const char* pathx, int mode)
 {
     int res;
 
@@ -488,7 +481,7 @@ static int test_eaccess (pathx, mode) const char* pathx;
     return res;
 }
 
-int test_parse (te) Test_env* te;
+int test_parse (Test_env* te)
 {
     int res;
 
@@ -502,8 +495,7 @@ int test_parse (te) Test_env* te;
     return (te->flags & TEF_ERROR) ? T_ERR_EXIT : !res;
 }
 
-static int test_oexpr (te, do_eval) Test_env* te;
-                                    int do_eval;
+static int test_oexpr (Test_env* te, int do_eval)
 {
     int res;
 
@@ -519,8 +511,7 @@ static int test_oexpr (te, do_eval) Test_env* te;
     return res;
 }
 
-static int test_aexpr (te, do_eval) Test_env* te;
-                                    int do_eval;
+static int test_aexpr (Test_env* te, int do_eval)
 {
     int res;
 
@@ -536,8 +527,7 @@ static int test_aexpr (te, do_eval) Test_env* te;
     return res;
 }
 
-static int test_nexpr (te, do_eval) Test_env* te;
-                                    int do_eval;
+static int test_nexpr (Test_env* te, int do_eval)
 {
     if (!(te->flags & TEF_ERROR) && (*te->isa)(te, TM_NOT))
     {
@@ -546,8 +536,7 @@ static int test_nexpr (te, do_eval) Test_env* te;
     return test_primary(te, do_eval);
 }
 
-static int test_primary (te, do_eval) Test_env* te;
-                                      int do_eval;
+static int test_primary (Test_env* te, int do_eval)
 {
     const char* opnd1, * opnd2;
     int res;
@@ -617,8 +606,7 @@ static int test_primary (te, do_eval) Test_env* te;
  * it is.  Returns 0 if it is not, non-zero if it is (in the case of
  * TM_UNOP and TM_BINOP, the returned value is a Test_op).
  */
-static int ptest_isa (te, meta) Test_env* te;
-                                Test_meta meta;
+static int ptest_isa (Test_env* te, Test_meta meta)
 {
     /* Order important - indexed by Test_meta values */
     static const char* const tokens[] = {
@@ -653,10 +641,9 @@ static int ptest_isa (te, meta) Test_env* te;
     return ret;
 }
 
-static const char* ptest_getopnd (te, op, do_eval) Test_env* te;
-                                                   Test_op op;
-                                                   int do_eval;
+static const char* ptest_getopnd (Test_env* te, Test_op op, int do_eval)
 {
+    (void) do_eval; /*  todo: lazy use */
     if (te->pos.wp >= te->wp_end)
     {
         return op == TO_FILTT ? "1" : (const char*) 0;
@@ -664,18 +651,12 @@ static const char* ptest_getopnd (te, op, do_eval) Test_env* te;
     return *te->pos.wp++;
 }
 
-static int ptest_eval (te, op, opnd1, opnd2, do_eval) Test_env* te;
-                                                      Test_op op;
-                                                      const char* opnd1;
-                                                      const char* opnd2;
-                                                      int do_eval;
+static int ptest_eval (Test_env* te, Test_op op, const char* opnd1, const char* opnd2, int do_eval)
 {
     return test_eval(te, op, opnd1, opnd2, do_eval);
 }
 
-static void ptest_error (te, offset, msg) Test_env* te;
-                                          int offset;
-                                          const char* msg;
+static void ptest_error (Test_env* te, int offset, const char* msg)
 {
     const char* op = te->pos.wp + offset >= te->wp_end ? (const char*) 0 : te->pos.wp[offset];
 
