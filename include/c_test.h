@@ -3,8 +3,7 @@
 /* Various types of operations.  Keeping things grouped nicely
  * (unary,binary) makes switch() statements more efficient.
  */
-enum Test_op
-{
+enum Test_op {
     /* non-operator */
     TO_NONOP = 0,
     /* unary operators */
@@ -50,8 +49,7 @@ enum Test_op
 typedef enum Test_op Test_op;
 
 /* Used by Test_env.isa() (order important - used to index *_tokens[] arrays) */
-enum Test_meta
-{
+enum Test_meta {
     TM_OR,      /* -o or || */
     TM_AND,     /* -a or && */
     TM_NOT,     /* ! */
@@ -69,32 +67,30 @@ typedef enum Test_meta Test_meta;
 
 typedef struct test_env Test_env;
 
-struct test_env
-{
+struct test_env {
     int flags;              /* TEF_* */
 
-    union
-    {
-        char** wp;          /* used by ptest_* */
-        XPtrV* av;          /* used by dbtestp_* */
+    union {
+        char **wp;          /* used by ptest_* */
+        XPtrV *av;          /* used by dbtestp_* */
     } pos;
-    char** wp_end;          /* used by ptest_* */
+    char **wp_end;          /* used by ptest_* */
 
     int
-    (* isa) ARGS((Test_env * te, Test_meta meta));
+    (*isa)ARGS((Test_env * te, Test_meta meta));
 
-    const char*
-    (* getopnd) ARGS((Test_env * te, Test_op op, int do_eval));
+    const char *
+    (*getopnd)ARGS((Test_env * te, Test_op op, int do_eval));
 
     int
-    (* eval) ARGS((Test_env * te, Test_op op, const char* opnd1, const char* opnd2, int do_eval));
+    (*eval)ARGS((Test_env * te, Test_op op, const char *opnd1, const char *opnd2, int do_eval));
 
     void
-    (* error) ARGS((Test_env * te, int offset, const char* msg));
+    (*error)ARGS((Test_env * te, int offset, const char *msg));
 };
 
-Test_op test_isop ARGS((Test_env * te, Test_meta meta, const char* s));
+Test_op test_isop ARGS((Test_env * te, Test_meta meta, const char *s));
 
-int test_eval ARGS((Test_env * te, Test_op op, const char* opnd1, const char* opnd2, int do_eval));
+int test_eval ARGS((Test_env * te, Test_op op, const char *opnd1, const char *opnd2, int do_eval));
 
 int test_parse ARGS((Test_env * te));

@@ -1046,6 +1046,7 @@ Source* pushs (type, areap) int type;
     {
         char* dummy;
         Xinit(s->xs, dummy, 256, s->areap);
+        (void) dummy; /* fixme: unused var */
     }
     else
     {

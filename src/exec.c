@@ -39,8 +39,8 @@ static int dbteste_isa ARGS((Test_env * , Test_meta));
 
 static const char *dbteste_getopnd ARGS((Test_env * , Test_op, int));
 
-static int dbteste_eval ARGS((Test_env * , Test_op, const char *,
-                                     const char *, int));
+//static int dbteste_eval ARGS((Test_env * , Test_op, const char *,
+//                                     const char *, int));
 
 static void dbteste_error ARGS((Test_env * , int, const char *));
 
@@ -84,7 +84,6 @@ int execute(struct op *volatile t, volatile int flags) {
     char *s, *cp;
     struct ioword **iowp;
     struct tbl *tp = NULL;
-    int tmp;
 
     if (t == NULL) {
         return 0;
@@ -290,7 +289,7 @@ int execute(struct op *volatile t, volatile int flags) {
             te.pos.wp = t->args;
             te.isa = dbteste_isa;
             te.getopnd = dbteste_getopnd;
-            te.eval = dbteste_eval;
+            // te.eval = dbteste_eval;
             te.error = dbteste_error;
 
             rv = test_parse(&te);
@@ -1079,7 +1078,6 @@ static int iosetup(struct ioword *iop, struct tbl *tp) {
     int do_open = 1, do_close = 0, UNINITIALIZED(flags);
     struct ioword iotmp;
     struct stat statb;
-    int tmp;
 
     if (iotype != IOHERE) {
         cp = evalonestr(cp, DOTILDE | (Flag(FTALKING_I) ? DOGLOB : 0));
@@ -1481,9 +1479,9 @@ static const char *dbteste_getopnd(Test_env *te, Test_op op, int do_eval) {
     return s;
 }
 
-static int dbteste_eval(Test_env *te, Test_op op, const char *opnd1, const char *opnd2, int do_eval) {
-    return test_eval(te, op, opnd1, opnd2, do_eval);
-}
+//static int dbteste_eval(Test_env *te, Test_op op, const char *opnd1, const char *opnd2, int do_eval) {
+//    return test_eval(te, op, opnd1, opnd2, do_eval);
+//}
 
 static void dbteste_error(Test_env *te, int offset, const char *msg) {
     te->flags |= TEF_ERROR;

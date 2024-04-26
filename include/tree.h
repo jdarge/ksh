@@ -7,25 +7,23 @@
 /* $Id: tree.h,v 1.7 2017/06/22 14:20:46 kamil Exp $ */
 
 #define    NOBLOCK    ((struct op *)NULL)
-#define    NOWORD    ((char *)NULL)
+// #define    NOWORD    ((char *)NULL)
 #define    NOWORDS    ((char **)NULL)
 
 /*
  * Description of a command or an operation on commands.
  */
-struct op
-{
+struct op {
     short type;            /* operation type, see below */
-    union
-    { /* WARNING: newtp(), tcopy() use evalflags = 0 to clear union */
+    union { /* WARNING: newtp(), tcopy() use evalflags = 0 to clear union */
         short evalflags;    /* TCOM: arg expansion eval() flags */
         short ksh_func;    /* TFUNC: function x (vs x()) */
     } u;
-    char** args;            /* arguments to a command */
-    char** vars;            /* variable assignments */
-    struct ioword** ioact;    /* IO actions (eg, < > >>) */
-    struct op* left, * right;    /* descendents */
-    char* str;            /* word for case; identifier for for,
+    char **args;            /* arguments to a command */
+    char **vars;            /* variable assignments */
+    struct ioword **ioact;    /* IO actions (eg, < > >>) */
+    struct op *left, *right;    /* descendents */
+    char *str;            /* word for case; identifier for for,
 					 * select, and functions;
 					 * path to execute for TEXEC;
 					 * time hook for TCOM.
@@ -77,13 +75,12 @@ struct op
 /*
  * IO redirection
  */
-struct ioword
-{
+struct ioword {
     int unit;    /* unit affected */
     int flag;    /* action (below) */
-    char* name;    /* file name (unused if heredoc) */
-    char* delim;    /* delimiter for <<,<<- */
-    char* heredoc;/* content of heredoc */
+    char *name;    /* file name (unused if heredoc) */
+    char *delim;    /* delimiter for <<,<<- */
+    char *heredoc;/* content of heredoc */
 };
 
 /* ioword.flag - type of redirection */
@@ -106,7 +103,7 @@ struct ioword
 #define    XBGND    BIT(2)        /* command & */
 #define    XPIPEI    BIT(3)        /* input is pipe */
 #define    XPIPEO    BIT(4)        /* output is pipe */
-#define    XPIPE    (XPIPEI|XPIPEO)    /* member of pipe */
+// #define    XPIPE    (XPIPEI|XPIPEO)    /* member of pipe */
 #define    XXCOM    BIT(5)        /* `...` command */
 #define    XPCLOSE    BIT(6)        /* exchild: close close_fd in parent */
 #define    XCCLOSE    BIT(7)        /* exchild: close close_fd in child */
@@ -137,8 +134,8 @@ struct ioword
  * like all other t->vars[]) in which the second character is the one that
  * is examined.  The DB_* defines are the values for these second characters.
  */
-#define DB_NORM    1        /* normal argument */
-#define DB_OR    2        /* || -> -o conversion */
-#define DB_AND    3        /* && -> -a conversion */
-#define DB_BE    4        /* an inserted -BE */
-#define DB_PAT    5        /* a pattern argument */
+// #define DB_NORM    1        /* normal argument */
+// #define DB_OR    2        /* || -> -o conversion */
+// #define DB_AND    3        /* && -> -a conversion */
+// #define DB_BE    4        /* an inserted -BE */
+// #define DB_PAT    5        /* a pattern argument */

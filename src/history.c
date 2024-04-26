@@ -692,6 +692,9 @@ void histsave (lno, cmd, dowrite) int lno;    /* ignored (compatibility with COM
     char** hp = histptr;
     char* cp;
 
+    (void) lno; /* fixme: unused var */
+    (void) dowrite; /* fixme: unused var */
+
     if (++hp >= histlist + histsize)
     { /* remove oldest command */
         afree((void*) histlist[0], APERM);

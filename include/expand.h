@@ -7,15 +7,14 @@
 
 #define X_EXTRA 8       /* this many extra bytes in X string */
 
-typedef struct XString
-{
-    char* beg;          /* end, begin of string */
-    char* end;
+typedef struct XString {
+    char *beg;          /* end, begin of string */
+    char *end;
     size_t len;         /* length */
-    Area* areap;        /* area to allocate/free from */
+    Area *areap;        /* area to allocate/free from */
 } XString;
 
-typedef char* XStringP;
+//typedef char *XStringP;
 
 /* initialize expandable string */
 #define Xinit(xs, xp, length, area) do { \
@@ -53,16 +52,15 @@ typedef char* XStringP;
 /* free string */
 #define Xfree(xs, xp) afree((void*) (xs).beg, (xs).areap)
 
-char* Xcheck_grow_ ARGS((XString * xsp, char* xp, int more));
+char *Xcheck_grow_ ARGS((XString * xsp, char *xp, int more)); /* todo: unused */
 
 /*
  * expandable vector of generic pointers
  */
 
-typedef struct XPtrV
-{
-    void** cur;             /* next avail pointer */
-    void** beg, ** end;     /* begin, end of vector */
+typedef struct XPtrV {
+    void **cur;             /* next avail pointer */
+    void **beg, **end;     /* begin, end of vector */
 } XPtrV;
 
 #define XPinit(x, n) do { \

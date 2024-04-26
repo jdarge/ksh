@@ -10,27 +10,25 @@
 
 typedef struct source Source;
 
-struct source
-{
-    const char* str;                    /* input pointer */
+struct source {
+    const char *str;                    /* input pointer */
     int type;                           /* input type */
-    const char* start;                  /* start of current buffer */
-    union
-    {
-        char** strv;                    /* string [] */
-        struct shf* shf;                /* shell file */
-        struct tbl* tblp;               /* alias (SALIAS) */
-        char* freeme;                   /* also for SREREAD */
+    const char *start;                  /* start of current buffer */
+    union {
+        char **strv;                    /* string [] */
+        struct shf *shf;                /* shell file */
+        struct tbl *tblp;               /* alias (SALIAS) */
+        char *freeme;                   /* also for SREREAD */
     } u;
     char ugbuf[2];                      /* buffer for ungetsc() (SREREAD) and
 				                         * alias (SALIAS) */
     int line;                           /* line number */
     int errline;                        /* line the error occurred on (0 if not set) */
-    const char* file;                   /* input file name */
+    const char *file;                   /* input file name */
     int flags;                          /* SF_* */
-    Area* areap;
+    Area *areap;
     XString xs;                         /* input buffer */
-    Source* next;                       /* stacked source */
+    Source *next;                       /* stacked source */
 };
 
 /* Source.type values */
@@ -69,13 +67,12 @@ struct source
 #define SPATTERN    11                  /* parsing *(...|...) pattern (*+?@!) */
 #define STBRACE     12                  /* parsing ${..[#%]..} */
 
-typedef union
-{
+typedef union {
     int i;
-    char* cp;
-    char** wp;
-    struct op* o;
-    struct ioword* iop;
+    char *cp;
+    char **wp;
+    struct op *o;
+    struct ioword *iop;
 } YYSTYPE;
 
 /* If something is added here, add it to tokentab[] in syn.c as well */
@@ -123,16 +120,16 @@ typedef union
 
 #define HERES 10                        /* max << in line */
 
-EXTERN Source* source;                  /* yyparse/yylex source */
+EXTERN Source *source;                  /* yyparse/yylex source */
 EXTERN YYSTYPE yylval;                  /* result from yylex */
-EXTERN struct ioword* heres[HERES], ** herep;
+EXTERN struct ioword *heres[HERES], **herep;
 
 EXTERN char ident[IDENT + 1];
 
 #ifdef HISTORY
 # define HISTORYSIZE 128                /* size of saved history */
 
-EXTERN char** histlist;                 /* saved commands */
-EXTERN char** histptr;                  /* last history item */
+EXTERN char **histlist;                 /* saved commands */
+EXTERN char **histptr;                  /* last history item */
 EXTERN int histsize;                    /* history size */
 #endif /* HISTORY */

@@ -16,7 +16,7 @@ void* aresize ARGS((void *, size_t, Area *));
 void afree ARGS((void *, Area *));
 
 /* c_ksh.c */
-int c_hash ARGS((char **));
+//int c_hash ARGS((char **));
 int c_cd ARGS((char **));
 int c_pwd ARGS((char **));
 int c_print ARGS((char **));
@@ -31,7 +31,7 @@ int c_fgbg ARGS((char **));
 int c_kill ARGS((char **));
 void getopts_reset ARGS((int));
 int c_getopts ARGS((char **));
-int c_bind ARGS((char **));
+//int c_bind ARGS((char **));
 
 /* c_sh.c */
 int c_label ARGS((char **));
@@ -77,7 +77,7 @@ void flushcom ARGS((int all));
 char* search ARGS((const char *, const char *, int, int *));
 int search_access ARGS((const char *, int, int *));
 int pr_menu ARGS((char *const *));
-int pr_list ARGS((char *const *));
+//int pr_list ARGS((char *const *));
 
 /* expr.c */
 int evaluate ARGS((const char *, long *, int));
@@ -96,9 +96,9 @@ void sethistfile ARGS((const char *));
 # ifdef EASY_HISTORY
 void histappend ARGS((const char *, int));
 # endif
-char** histpos ARGS((void));
-int histN ARGS((void));
-int histnum ARGS((int));
+//char** histpos ARGS((void));
+//int histN ARGS((void));
+//int histnum ARGS((int));
 int findhist ARGS((int, int, const char *, int));
 #endif /* HISTORY */
 
@@ -184,8 +184,8 @@ void newenv ARGS((short));
 void quitenv ARGS((void));
 void cleanup_parents_env ARGS((void));
 void cleanup_proc_env ARGS((void));
-void aerror ARGS((Area * , const char *))
-GCC_FUNC_ATTR(noreturn);
+//void aerror ARGS((Area * , const char *))
+//GCC_FUNC_ATTR(noreturn);
 
 /* misc.c */
 void setctypes ARGS((const char *, int));
@@ -209,7 +209,7 @@ char ksh_getopt ARGS((char **, Getopt *, const char *));
 void print_value_quoted ARGS((const char *));
 void print_columns ARGS((struct shf *, int, char *(*)(void *, int, char *, int), void *, int, int));
 int strip_nuls ARGS((char *, int));
-char* str_zcpy ARGS((char *, const char *, int));
+//char* str_zcpy ARGS((char *, const char *, int));
 int blocking_read ARGS((int, char *, int));
 int reset_nonblock ARGS((int));
 char* ksh_get_wd ARGS((char *, int));

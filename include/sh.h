@@ -76,7 +76,7 @@
 # define KSH_SA_FLAGS    0
 #endif /* SA_INTERRUPT */
 
-typedef RETSIGTYPE (* handler_t) ARGS((int));    /* signal handler */
+typedef RETSIGTYPE (*handler_t)ARGS((int));    /* signal handler */
 
 #ifdef HAVE_PATHS_H
 
@@ -140,20 +140,20 @@ typedef RETSIGTYPE (* handler_t) ARGS((int));    /* signal handler */
  * ISRELPATH() means $PWD can be tacked on to get an absolute path.
  *
  * OS		Path		ISABSPATH	ISROOTEDPATH	ISRELPATH
- * unix		/foo		yes		yes		no
- * unix		foo		no		no		yes
- * unix		../foo		no		no		yes
+ * unix		/foo		yes		    yes		        no
+ * unix		foo		    no		    no		        yes
+ * unix		../foo		no		    no		        yes
  */
 # define PATHSEP        ':'
 # define DIRSEP         '/'
-# define DIRSEPSTR      "/"
+//# define DIRSEPSTR      "/"
 # define ISDIRSEP(c)    ((c) == '/')
 # define ISABSPATH(s)    ISDIRSEP((s)[0])
 # define ISRELPATH(s)    (!ISABSPATH(s))
 # define ISROOTEDPATH(s) ISABSPATH(s)
 # define FILECHCONV(c)    c
-# define FILECMP(s1, s2) strcmp(s1, s2)
-# define FILENCMP(s1, s2, n) strncmp(s1, s2, n)
+//# define FILECMP(s1, s2) strcmp(s1, s2)
+//# define FILENCMP(s1, s2, n) strncmp(s1, s2, n)
 # define ksh_strchr_dirsep(p)   strchr(p, DIRSEP)
 # define ksh_strrchr_dirsep(p)  strrchr(p, DIRSEP)
 
@@ -182,20 +182,19 @@ typedef int_least32_t Tflag;
 #define    PATH    1024        /* pathname size (todo: PATH_MAX/pathconf()) */
 #define ARRAYMAX 1023        /* max array index */
 
-EXTERN const char* kshname;    /* $0 */
+EXTERN const char *kshname;    /* $0 */
 EXTERN pid_t kshpid;        /* $$, shell pid */
 EXTERN pid_t procpid;    /* pid of executing process */
 EXTERN uid_t ksheuid;    /* effective uid of shell */
 EXTERN int exstat;        /* exit status */
 EXTERN int subst_exstat;    /* exit status of last $(..)/`..` */
-EXTERN const char* safe_prompt; /* safe prompt if PS1 substitution fails */
+EXTERN const char *safe_prompt; /* safe prompt if PS1 substitution fails */
 
 /*
  * Area-based allocation built on malloc/free
  */
-typedef struct Area
-{
-    struct link* freelist;    /* free list */
+typedef struct Area {
+    struct link *freelist;    /* free list */
 } Area;
 
 EXTERN Area aperm;        /* permanent object space */
@@ -215,17 +214,16 @@ EXTERN Area aperm;        /* permanent object space */
 /*
  * parsing & execution environment
  */
-EXTERN struct env
-{
+EXTERN struct env {
     short type;            /* environment type - see below */
     short flags;            /* EF_* */
     Area area;            /* temporary allocation area */
-    struct block* loc;        /* local variables and functions */
-    short* savefd;            /* original redirected fd's */
-    struct env* oenv;        /* link to previous environment */
+    struct block *loc;        /* local variables and functions */
+    short *savefd;            /* original redirected fd's */
+    struct env *oenv;        /* link to previous environment */
     ksh_jmp_buf jbuf;        /* long jump back to env creator */
-    struct temp* temps;        /* temp files */
-} * e;
+    struct temp *temps;        /* temp files */
+} *e;
 
 /* struct env.type values */
 #define    E_NONE    0        /* dummy environment */
@@ -266,9 +264,8 @@ EXTERN struct env
 #define OF_INTERNAL    0x08    /* set internally by shell */
 #define OF_ANY        (OF_CMDLINE | OF_SET | OF_SPECIAL | OF_INTERNAL)
 
-struct option
-{
-    const char* name;    /* long name of option */
+struct option {
+    const char *name;    /* long name of option */
     char c;    /* character flag (if any) */
     short flags;    /* OF_* */
 };
@@ -278,8 +275,7 @@ extern const struct option goptions[];
 /*
  * flags (the order of these enums MUST match the order in misc.c(options[]))
  */
-enum sh_flag
-{
+enum sh_flag {
     FEXPORT = 0,    /* -a: export all */
 #ifdef BRACE_EXPAND
     FBRACEEXPAND,    /* enable {} globbing */
@@ -288,7 +284,7 @@ enum sh_flag
     FCOMMAND,    /* -c: (invocation) execute specified command */
 #ifdef EMACS
     FEMACS,        /* emacs command editing */
-    FEMACSUSEMETA,    /* use 8th bit as meta */
+//    FEMACSUSEMETA,    /* use 8th bit as meta */
 #endif
     FERREXIT,    /* -e: quit on error */
 #ifdef EMACS
@@ -304,7 +300,7 @@ enum sh_flag
     FNOEXEC,    /* -n: don't execute any commands */
     FNOGLOB,    /* -f: don't do file globbing */
     FNOHUP,        /* -H: don't kill running jobs when login shell exits */
-    FNOLOG,        /* don't save functions in history (ignored) */
+//    FNOLOG,        /* don't save functions in history (ignored) */
 #ifdef    JOBS
     FNOTIFY,    /* -b: asynchronous job completion notification */
 #endif
@@ -318,10 +314,10 @@ enum sh_flag
     FVERBOSE,    /* -v: echo input */
 #ifdef VI
     FVI,        /* vi command editing */
-    FVIRAW,        /* always read in raw mode (ignored) */
-    FVISHOW8,    /* display chars with 8th bit set as is (versus M-) */
+//    FVIRAW,        /* always read in raw mode (ignored) */
+//    FVISHOW8,    /* display chars with 8th bit set as is (versus M-) */
     FVITABCOMPLETE,    /* enable tab as file name completion char */
-    FVIESCCOMPLETE,    /* enable ESC as file name completion in command mode */
+//    FVIESCCOMPLETE,    /* enable ESC as file name completion in command mode */
 #endif
     FXTRACE,    /* -x: execution trace */
     FTALKING_I,    /* (internal): initial shell was interactive */
@@ -337,10 +333,9 @@ EXTERN char space[] I__(" ");
 
 EXTERN char newline[] I__("\n");
 
-EXTERN char slash[] I__("/");
+//EXTERN char slash[] I__("/");
 
-enum temp_type
-{
+enum temp_type {
     TT_HEREDOC_EXP,    /* expanded heredoc */
     TT_HIST_EDIT    /* temp file used for history editing (fc -e) */
 };
@@ -348,13 +343,12 @@ enum temp_type
 typedef enum temp_type Temp_type;
 
 /* temp/heredoc files.  The file is removed when the struct is freed. */
-struct temp
-{
-    struct temp* next;
-    struct shf* shf;
+struct temp {
+    struct temp *next;
+    struct shf *shf;
     int pid;        /* pid of process parsed here-doc */
     Temp_type type;
-    char* name;
+    char *name;
 };
 
 /*
@@ -370,12 +364,11 @@ EXTERN int shl_stdout_ok;
 /*
  * trap handlers
  */
-typedef struct trap
-{
+typedef struct trap {
     int signal;        /* signal number */
-    const char* name;    /* short name */
-    const char* mess;    /* descriptive name */
-    char* trap;        /* trap command */
+    const char *name;    /* short name */
+    const char *mess;    /* descriptive name */
+    char *trap;        /* trap command */
     int volatile set;    /* trap pending */
     int flags;        /* TF_* */
     handler_t cursig;    /* current handler (valid if TF_ORIG_* set) */
@@ -417,8 +410,7 @@ extern Trap sigtraps[SIGNALS + 1];
  * TMOUT support
  */
 /* values for ksh_tmout_state */
-enum tmout_enum
-{
+enum tmout_enum {
     TMOUT_EXECUTING = 0,    /* executing commands */
     TMOUT_READING,        /* waiting for input */
     TMOUT_LEAVING        /* have timed out */
@@ -467,11 +459,10 @@ EXTERN int ifs0 I__(' ');    /* for "$*" */
 #define GI_PLUS        BIT(1)    /* an option started with +... */
 #define GI_MINUSMINUS    BIT(2)    /* arguments were ended with -- */
 
-typedef struct
-{
+typedef struct {
     int optind;
     int uoptind;/* what user sees in $OPTIND */
-    char* optarg;
+    char *optarg;
     int flags;    /* see GF_* */
     int info;    /* see GI_* */
     unsigned int p;    /* 0 or index into argv[optind - 1] */
@@ -486,14 +477,13 @@ EXTERN Getopt user_opt;        /* parsing state for getopts builtin command */
 /* This for co-processes */
 
 typedef int_least32_t Coproc_id; /* something that won't (realisticly) wrap */
-struct coproc
-{
+struct coproc {
     int read;        /* pipe from co-process's stdout */
     int readw;        /* other side of read (saved temporarily) */
     int write;        /* pipe to co-process's stdin */
     Coproc_id id;        /* id of current output pipe */
     int njobs;        /* number of live jobs using output pipe */
-    void* job;           /* 0 or job of co-process using input pipe */
+    void *job;           /* 0 or job of co-process using input pipe */
 };
 
 EXTERN struct coproc coproc;
@@ -506,12 +496,12 @@ EXTERN sigset_t sm_default, sm_sigchld;
 extern char ksh_version[];
 
 /* name of called builtin function (used by error functions) */
-EXTERN char* builtin_argv0;
+EXTERN char *builtin_argv0;
 
 EXTERN Tflag builtin_flag;    /* flags of called builtin (SPEC_BI, etc.) */
 
 /* current working directory, and size of memory allocated for same */
-EXTERN char* current_wd;
+EXTERN char *current_wd;
 
 EXTERN int current_wd_size;
 
@@ -530,10 +520,10 @@ EXTERN int x_cols I__(80);    /* tty columns */
 #endif
 
 /* These to avoid bracket matching problems */
-#define OPAREN    '('
-#define CPAREN    ')'
-#define OBRACK    '['
-#define CBRACK    ']'
+//#define OPAREN    '('
+//#define CPAREN    ')'
+//#define OBRACK    '['
+//#define CBRACK    ']'
 #define OBRACE    '{'
 #define CBRACE    '}'
 

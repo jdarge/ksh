@@ -61,6 +61,9 @@ void alarm_init ()
 
 static RETSIGTYPE alarm_catcher (sig) int sig;
 {
+
+    (void) sig; /* fixme: unused var */
+
     int errno_ = errno;
 
     if (ksh_tmout_state == TMOUT_READING)

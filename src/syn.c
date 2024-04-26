@@ -1001,6 +1001,9 @@ static const char* dbtestp_getopnd (te, op, do_eval) Test_env* te;
                                                      Test_op op;
                                                      int do_eval;
 {
+    (void) op; /* fixme: unused var */
+    (void) do_eval; /* fixme: unused var */
+
     int c = tpeek(ARRAYVAR);
 
     if (c != LWORD)
@@ -1020,6 +1023,7 @@ static int dbtestp_eval (te, op, opnd1, opnd2, do_eval) Test_env* te;
                                                         const char* opnd2;
                                                         int do_eval;
 {
+    (void) te; (void) op, (void) opnd1, (void) opnd2, (void) do_eval; /* fixme: unused vars */
     return 1;
 }
 

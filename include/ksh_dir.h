@@ -4,7 +4,9 @@
 /* $NetBSD: ksh_dir.h,v 1.2 1997/01/12 19:11:59 tls Exp $ */
 
 #if defined(HAVE_DIRENT_H)
+
 #include <dirent.h>
+
 #define NLENGTH(dirent) (strlen(dirent->d_name))
 #else
 # define dirent direct

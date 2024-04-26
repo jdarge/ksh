@@ -41,6 +41,9 @@ int set_tty (fd, ts, flags) int fd;
                             TTY_state* ts;
                             int flags;
 {
+
+    (void) flags; /* fixme: unused var */
+
     int ret = 0;
 
 # ifdef HAVE_TERMIOS_H

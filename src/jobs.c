@@ -1422,6 +1422,8 @@ static RETSIGTYPE j_sigchld (sig) int sig;
     int status;
     struct tms t0, t1;
 
+    (void) sig; /* fixme: unused var */
+
     /* Don't wait for any processes if a job is partially started.
      * This is so we don't do away with the process group leader
      * before all the processes in a pipe line are started (so the

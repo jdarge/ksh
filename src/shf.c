@@ -948,16 +948,7 @@ char* shf_smprintf (const char* fmt, ...)
  *  machines it don't matter.  Assumes C compiler has converted shorts to
  *  ints before pushing them.
  */
-#define POP_INT(f, s, a) (((f) & FL_LONG) ?                \
-                va_arg((a), unsigned long)        \
-                :                        \
-                (sizeof(int) < sizeof(long) ?        \
-                    ((s) ?                \
-                        (long) va_arg((a), int)    \
-                        :                \
-                        va_arg((a), unsigned))    \
-                    :                    \
-                    va_arg((a), unsigned)))
+#define POP_INT(f, s, a) (((f) & FL_LONG) ? va_arg((a), unsigned long) : (unsigned) (sizeof(int) < sizeof(long) ? ((s) ? (long) va_arg((a), int) : va_arg((a), unsigned)) : va_arg((a), unsigned)))
 
 #define ABIGNUM        32000    /* big numer that will fit in a short */
 #define LOG2_10        3.321928094887362347870319429    /* log base 2 of 10 */
