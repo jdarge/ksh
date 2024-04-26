@@ -3,10 +3,8 @@
 /*
  * execute command tree
  */
-#include <sys/cdefs.h>
 
 #include <sys/stat.h>
-#include <ctype.h>
 #include <stdbool.h>
 
 #include "sh.h"
@@ -62,8 +60,7 @@ static char clexec_tab[MAXFD+1];
 /*
  * we now use this function always.
  */
-int fd_clexec(fd)int fd;
-{
+int fd_clexec(int fd) {
 #ifndef F_SETFD
     if (fd >= 0 && fd < sizeof(clexec_tab)) {
         clexec_tab[fd] = 1;
@@ -79,9 +76,7 @@ int fd_clexec(fd)int fd;
 /*
  * execute command tree
  */
-int execute(t, flags)struct op *volatile t;
-                     volatile int flags;    /* if XEXEC don't fork */
-{
+int execute(struct op *volatile t, volatile int flags) {
     int i;
     volatile int rv = 0;
     int pv[2];
@@ -89,6 +84,7 @@ int execute(t, flags)struct op *volatile t;
     char *s, *cp;
     struct ioword **iowp;
     struct tbl *tp = NULL;
+    int tmp;
 
     if (t == NULL) {
         return 0;
@@ -169,9 +165,11 @@ int execute(t, flags)struct op *volatile t;
         case TPIPE:
             flags |= XFORK;
             flags &= ~XEXEC;
-            e->savefd[0] = savefd(0, 0);
+
+            e->savefd[0] = (short) savefd(0, 0);
             (void) ksh_dup2(e->savefd[0], 0, false); /* stdin of first */
-            e->savefd[1] = savefd(1, 0);
+            e->savefd[1] = (short) savefd(1, 0);
+
             while (t->type == TPIPE) {
                 openpipe(pv);
                 (void) ksh_dup2(pv[1], 1, false); /* stdout of curr */
@@ -227,8 +225,8 @@ int execute(t, flags)struct op *volatile t;
             coproc_cleanup(true);
 
             /* do this before opening pipes, in case these fail */
-            e->savefd[0] = savefd(0, 0);
-            e->savefd[1] = savefd(1, 0);
+            e->savefd[0] = (short) savefd(0, 0);
+            e->savefd[1] = (short) savefd(1, 0);
 
             openpipe(pv);
             if (pv[0] != 0) {
@@ -433,11 +431,7 @@ int execute(t, flags)struct op *volatile t;
  * execute simple command
  */
 
-static int comexec(t, tp, ap, flags)struct op *t;
-                                    struct tbl *volatile tp;
-                                    char **ap;
-                                    int volatile flags;
-{
+static int comexec(struct op *t, struct tbl *volatile tp, char **ap, int volatile flags) {
     int i;
     int leave = LLEAVE;
     volatile int rv = 0;
@@ -501,7 +495,7 @@ static int comexec(t, tp, ap, flags)struct op *t;
              * in c_command(), but such is life)
              */
             ksh_getopt_reset(&builtin_opt, 0);
-            while ((optc = ksh_getopt(ap, &builtin_opt, ":p")) == 'p') {
+            while ((optc = (int) (ksh_getopt(ap, &builtin_opt, ":p")) == 'p')) {
                 saw_p = 1;
             }
             if (optc != EOF) {
@@ -640,7 +634,7 @@ static int comexec(t, tp, ap, flags)struct op *t;
                 getopts_reset(1);
             }
 
-            old_xflag = Flag(FXTRACE);
+            old_xflag = (int) Flag(FXTRACE);
             Flag(FXTRACE) = tp->flag & TRACE ? true : false;
 
             old_inuse = tp->flag & FINUSE;
@@ -654,7 +648,7 @@ static int comexec(t, tp, ap, flags)struct op *t;
                 i = LRETURN;
             }
             kshname = old_kshname;
-            Flag(FXTRACE) = old_xflag;
+            Flag(FXTRACE) = (char) old_xflag;
             tp->flag = (tp->flag & ~FINUSE) | old_inuse;
             /* Were we deleted while executing?  If so, free the execution
              * tree.  todo: Unfortunately, the table entry is never re-used
@@ -735,9 +729,7 @@ static int comexec(t, tp, ap, flags)struct op *t;
     return rv;
 }
 
-static void scriptexec(tp, ap)struct op *tp;
-                              char **ap;
-{
+static void scriptexec(struct op *tp, char **ap) {
     char *shellv;
 
     shellv = str_val(global(EXECSHELL_STR));
@@ -757,8 +749,7 @@ static void scriptexec(tp, ap)struct op *tp;
     errorf("%s: %s: %s", tp->str, shellv, strerror(errno));
 }
 
-int shcomexec(wp)char **wp;
-{
+int shcomexec(char **wp) {
     struct tbl *tp;
 
     tp = mytsearch(&builtins, *wp, hash(*wp));
@@ -772,10 +763,7 @@ int shcomexec(wp)char **wp;
  * Search function tables for a function.  If create set, a table entry
  * is created if none is found.
  */
-struct tbl *findfunc(name, h, create)const char *name;
-                                     unsigned int h;
-                                     int create;
-{
+struct tbl *findfunc(const char *name, unsigned int h, int create) {
     struct block *l;
     struct tbl *tp = (struct tbl *) 0;
 
@@ -799,9 +787,7 @@ struct tbl *findfunc(name, h, create)const char *name;
  * define function.  Returns 1 if function is being undefined (t == 0) and
  * function did not exist, returns 0 otherwise.
  */
-int define(name, t)const char *name;
-                   struct op *t;
-{
+int define(const char *name, struct op *t) {
     struct tbl *tp;
     int was_set = 0;
 
@@ -845,9 +831,7 @@ int define(name, t)const char *name;
 /*
  * add builtin
  */
-void builtin(name, func)const char *name;
-                        int (*func)ARGS((char **));
-{
+void builtin(const char *name, int (*func)ARGS((char **))) {
     struct tbl *tp;
     Tflag flag;
 
@@ -874,13 +858,11 @@ void builtin(name, func)const char *name;
  * find command
  * either function, hashed command, or built-in (in that order)
  */
-struct tbl *findcom(name, flags)const char *name;
-                                int flags;        /* FC_* */
-{
+struct tbl *findcom(const char *name, int flags) {
     static struct tbl temp;
     unsigned int h = hash(name);
     struct tbl *tp = NULL, *tbi;
-    int insert = Flag(FTRACKALL);    /* insert if not found */
+    int insert = (int)Flag(FTRACKALL);    /* insert if not found */
     char *fpath;            /* for function autoloading */
     char *npath;
 
@@ -979,8 +961,7 @@ struct tbl *findcom(name, flags)const char *name;
 /*
  * flush executable commands with relative paths
  */
-void flushcom(all)int all;        /* just relative or all */
-{
+void flushcom(int all) {
     struct tbl *tp;
     struct tstate ts;
 
@@ -996,10 +977,7 @@ void flushcom(all)int all;        /* just relative or all */
 }
 
 /* Check if path is something we want to find.  Returns -1 for failure. */
-int search_access(pathx, mode, errnop)const char *pathx;
-                                      int mode;
-                                      int *errnop;        /* set if candidate found, but not suitable */
-{
+int search_access(const char *pathx, int mode, int *errnop) {
     int ret, err = 0;
     struct stat statb;
 
@@ -1026,11 +1004,7 @@ int search_access(pathx, mode, errnop)const char *pathx;
 /*
  * search for command with PATH
  */
-char *search(name, pathx, mode, errnop)const char *name;
-                                       const char *pathx;
-                                       int mode;        /* R_OK or X_OK */
-                                       int *errnop;        /* set if candidate found, but not suitable */
-{
+char *search(const char *name, const char *pathx, int mode, int *errnop) {
     const char *sp, *p;
     char *xp;
     XString xs;
@@ -1047,7 +1021,10 @@ char *search(name, pathx, mode, errnop)const char *name;
         return NULL;
     }
 
-    namelen = strlen(name) + 1;
+    unsigned long tmp = strlen(name) + 1;
+    if(tmp > INT_MAX)
+        errorf("exec.c: search, strlen(...) too long.");
+    namelen = (int) tmp;
     Xinit(xs, xp, 128, ATEMP);
 
     sp = pathx;
@@ -1076,9 +1053,7 @@ char *search(name, pathx, mode, errnop)const char *name;
     return NULL;
 }
 
-static int call_builtin(tp, wp)struct tbl *tp;
-                               char **wp;
-{
+static int call_builtin(struct tbl *tp, char **wp) {
     int rv;
 
     builtin_argv0 = wp[0];
@@ -1097,15 +1072,14 @@ static int call_builtin(tp, wp)struct tbl *tp;
 /*
  * set up redirection, saving old fd's in e->savefd
  */
-static int iosetup(iop, tp)struct ioword *iop;
-                           struct tbl *tp;
-{
+static int iosetup(struct ioword *iop, struct tbl *tp) {
     int u = -1;
     char *cp = iop->name;
     int iotype = iop->flag & IOTYPE;
     int do_open = 1, do_close = 0, UNINITIALIZED(flags);
     struct ioword iotmp;
     struct stat statb;
+    int tmp;
 
     if (iotype != IOHERE) {
         cp = evalonestr(cp, DOTILDE | (Flag(FTALKING_I) ? DOGLOB : 0));
@@ -1171,6 +1145,8 @@ static int iosetup(iop, tp)struct ioword *iop;
             }        /* "dup from" == "dup to" */
             break;
         }
+        default:
+            break;
     }
     if (do_open) {
         if (Flag(FRESTRICTED) && (flags & O_CREAT)) {
@@ -1202,7 +1178,7 @@ static int iosetup(iop, tp)struct ioword *iop;
              * is 2; also means we can't lose the fd (eg, both
              * dup2 below and dup2 in restfd() failing).
              */
-            e->savefd[iop->unit] = savefd(iop->unit, 1);
+            e->savefd[iop->unit] = (short) savefd(iop->unit, 1);
         }
     }
 
@@ -1244,9 +1220,7 @@ static int iosetup(iop, tp)struct ioword *iop;
  * open here document temp file.
  * if unquoted here, expand here temp file into second temp file.
  */
-static int herein(content, sub)const char *content;
-                               int sub;
-{
+static int herein(const char *content, int sub) {
     volatile int fd = -1;
     struct source *s, *volatile osource;
     struct shf *volatile shf;
@@ -1320,6 +1294,7 @@ static char *do_selectargs(char **ap, bool print_menu) {
     };
     char *s;
     int i, argct;
+    char *endptr;
 
     for (argct = 0; ap[argct]; argct++) {
     }
@@ -1338,7 +1313,14 @@ static char *do_selectargs(char **ap, bool print_menu) {
         }
         s = str_val(global("REPLY"));
         if (*s) {
-            i = atoi(s);
+
+            i = (int)strtol(s, &endptr, 10);
+            if (*endptr != '\0') {
+                errorf("exec.c: do_selectargs, invalid input.");
+            }
+            if(errno == ERANGE) {
+                errorf("exec.c: do_selectargs, overflow or underflow error.");
+            }
             return (i >= 1 && i <= argct) ? ap[i - 1] : null;
         }
         print_menu = 1;
@@ -1347,18 +1329,14 @@ static char *do_selectargs(char **ap, bool print_menu) {
 
 struct select_menu_info {
     char *const *args;
-    int arg_width;
+    //int arg_width; /* FIXME: doesn't seem to be used */
     int num_width;
-} info;
+};
 
 static char *select_fmt_entry ARGS((void *arg, int i, char *buf, int buflen));
 
 /* format a single select menu item */
-static char *select_fmt_entry(arg, i, buf, buflen)void *arg;
-                                                  int i;
-                                                  char *buf;
-                                                  int buflen;
-{
+static char *select_fmt_entry(void *arg, int i, char *buf, int buflen) {
     struct select_menu_info *smi = (struct select_menu_info *) arg;
 
     shf_snprintf(buf, buflen, "%*d) %s", smi->num_width, i + 1, smi->args[i]);
@@ -1368,8 +1346,7 @@ static char *select_fmt_entry(arg, i, buf, buflen)void *arg;
 /*
  *	print a select style menu
  */
-int pr_menu(ap)char *const *ap;
-{
+int pr_menu(char *const *ap) {
     struct select_menu_info smi;
     char *const *pp;
     int nwidth, dwidth;
@@ -1385,12 +1362,12 @@ int pr_menu(ap)char *const *ap;
      * get dimensions of the list
      */
     for (n = 0, nwidth = 0, pp = ap; *pp; n++, pp++) {
-        i = strlen(*pp);
+        i = (int) strlen(*pp);/* todo: lazy cast */
         nwidth = (i > nwidth) ? i : nwidth;
     }
     /*
      * we will print an index of the form
-     *	%d)
+     *	%d
      * in front of each entry
      * get the max width of this
      */
@@ -1399,7 +1376,7 @@ int pr_menu(ap)char *const *ap;
     }
 
     smi.args = ap;
-    smi.arg_width = nwidth;
+    // smi.arg_width = nwidth; /* FIXME: doesn't seem to be used */
     smi.num_width = dwidth;
     print_columns(shl_out, n, select_fmt_entry, (void *) &smi, dwidth + nwidth + 2, 1);
 
@@ -1408,31 +1385,27 @@ int pr_menu(ap)char *const *ap;
 
 /* XXX: horrible kludge to fit within the framework */
 
-static char *plain_fmt_entry ARGS((void *arg, int i, char *buf, int buflen));
+/*static char *plain_fmt_entry ARGS((void *arg, int i, char *buf, int buflen));
 
-static char *plain_fmt_entry(arg, i, buf, buflen)void *arg;
-                                                 int i;
-                                                 char *buf;
-                                                 int buflen;
-{
+static char *plain_fmt_entry(void *arg, int i, char *buf, int buflen) {
     shf_snprintf(buf, buflen, "%s", ((char *const *) arg)[i]);
     return buf;
-}
+}*/
 
-int pr_list(ap)char *const *ap;
-{
+/*int pr_list(char *const *ap) {
     char *const *pp;
     int nwidth;
     int i, n;
 
     for (n = 0, nwidth = 0, pp = ap; *pp; n++, pp++) {
-        i = strlen(*pp);
+        i = (int) strlen(*pp); *//* todo: lazy cast *//*
         nwidth = (i > nwidth) ? i : nwidth;
     }
     print_columns(shl_out, n, plain_fmt_entry, (void *) (ap), nwidth + 1, 0);
 
     return n;
-}
+}*/
+
 #endif /* KSH */
 #ifdef KSH
 
@@ -1448,9 +1421,7 @@ extern const char db_close[];
  * it is.  Returns 0 if it is not, non-zero if it is (in the case of
  * TM_UNOP and TM_BINOP, the returned value is a Test_op).
  */
-static int dbteste_isa(te, meta)Test_env *te;
-                                Test_meta meta;
-{
+static int dbteste_isa(Test_env *te, Test_meta meta) {
     int ret = 0;
     int uqword;
     char *p;
@@ -1488,10 +1459,7 @@ static int dbteste_isa(te, meta)Test_env *te;
     return ret;
 }
 
-static const char *dbteste_getopnd(te, op, do_eval)Test_env *te;
-                                                   Test_op op;
-                                                   int do_eval;
-{
+static const char *dbteste_getopnd(Test_env *te, Test_op op, int do_eval) {
     char *s = *te->pos.wp;
 
     if (!s) {
@@ -1513,20 +1481,13 @@ static const char *dbteste_getopnd(te, op, do_eval)Test_env *te;
     return s;
 }
 
-static int dbteste_eval(te, op, opnd1, opnd2, do_eval)Test_env *te;
-                                                      Test_op op;
-                                                      const char *opnd1;
-                                                      const char *opnd2;
-                                                      int do_eval;
-{
+static int dbteste_eval(Test_env *te, Test_op op, const char *opnd1, const char *opnd2, int do_eval) {
     return test_eval(te, op, opnd1, opnd2, do_eval);
 }
 
-static void dbteste_error(te, offset, msg)Test_env *te;
-                                          int offset;
-                                          const char *msg;
-{
+static void dbteste_error(Test_env *te, int offset, const char *msg) {
     te->flags |= TEF_ERROR;
     internal_errorf(0, "dbteste_error: %s (offset %d)", msg, offset);
 }
+
 #endif /* KSH */
