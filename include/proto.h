@@ -131,7 +131,7 @@ int savefd ARGS((int, int));
 void restfd ARGS((int, int));
 void openpipe ARGS((int *));
 void closepipe ARGS((int *));
-int check_fd ARGS((char *, int, const char **));
+int check_fd ARGS((const char *, int, const char **));
 
 #ifdef KSH
 void coproc_init ARGS((void));
