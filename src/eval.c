@@ -40,25 +40,25 @@ typedef struct Expand {
 #define IFS_WS        1    /* have seen IFS white-space */
 #define IFS_NWS        2    /* have seen IFS non-white-space */
 
-static int var_sub ARGS((Expand * xp, char *sp, const char *word, int *stypep, int *slenp));
+static int var_sub(Expand *xp, char *sp, const char *word, int *stypep, int *slenp);
 
-static int com_sub ARGS((Expand * xp, const char *cp));
+static int com_sub(Expand *xp, const char *cp);
 
-static char *trim_sub ARGS((char *str, char *pat, int how));
+static char *trim_sub(char *str, char *pat, int how);
 
-static void ksh_glob ARGS((char *cp, XPtrV *wp, int markdirs));
+static void ksh_glob(char *cp, XPtrV *wp, int markdirs);
 
-static void globit ARGS((XString * xs, char **xpp, char *sp, XPtrV *wp, int check));
+static void globit(XString *xs, char **xpp, char *sp, XPtrV *wp, int check);
 
-static char *maybe_expand_tilde ARGS((char *p, XString *dsp, char **dpp, int is_assign));
+static char *maybe_expand_tilde(char *p, XString *dsp, char **dpp, int is_assign);
 
-static char *tilde ARGS((char *acp));
+static char *tilde(char *acp);
 
-static char *homedir ARGS((char *name));
+static char *homedir(char *name);
 
 #ifdef BRACE_EXPAND
 
-static void alt_expand ARGS((XPtrV * wp, char *start, char *exp_start, char *end, int fdo));
+static void alt_expand(XPtrV *wp, char *start, char *exp_start, char *end, int fdo);
 
 #endif
 
@@ -596,7 +596,6 @@ void expand(char *cp, XPtrV *wp, int f) {
                 } else {
                     XPput(*wp, debunk(p, p, strlen(p) + 1));
                 }
-
                 fdo = 0;
                 saw_eq = 0;
                 tilde_ok = (f & (DOTILDE | DOASNTILDE)) ? 1 : 0;
