@@ -6,8 +6,6 @@
 /*
  * todo: better error handling: if in builtin, should be builtin error, etc.
  */
-#include <sys/cdefs.h>
-
 #include "sh.h"
 #include <ctype.h>
 #include <stdbool.h>
@@ -178,9 +176,7 @@ static struct tbl* intvar ARGS((Expr_state * es, struct tbl* vp));
 /*
  * parse and evaluate expression
  */
-int evaluate (expr, rval, error_ok) const char* expr;
-                                    long* rval;
-                                    int error_ok;
+int evaluate (const char* expr, long* rval, int error_ok)
 {
     struct tbl v;
     int ret;
@@ -195,9 +191,7 @@ int evaluate (expr, rval, error_ok) const char* expr;
 /*
  * parse and evaluate expression, storing result in vp.
  */
-int v_evaluate (vp, expr, error_ok) struct tbl* vp;
-                                    const char* expr;
-                                    volatile int error_ok;
+int v_evaluate (struct tbl* vp, const char* expr, volatile int error_ok)
 {
     struct tbl* v;
     Expr_state curstate;
@@ -261,9 +255,7 @@ int v_evaluate (vp, expr, error_ok) struct tbl* vp;
     return 1;
 }
 
-static void evalerr (es, type, str) Expr_state* es;
-                                    enum error_type type;
-                                    const char* str;
+static void evalerr (Expr_state* es, enum error_type type, const char* str)
 {
     char tbuf[2];
     const char* s;
@@ -317,8 +309,7 @@ static void evalerr (es, type, str) Expr_state* es;
     unwind(LAEXPR);
 }
 
-static struct tbl* evalexpr (es, prec) Expr_state* es;
-                                       enum prec prec;
+static struct tbl* evalexpr (Expr_state* es, enum prec prec)
 {
     struct tbl* vl, UNINITIALIZED(*vr), * vasn;
     enum token op;
@@ -527,10 +518,10 @@ static struct tbl* evalexpr (es, prec) Expr_state* es;
             }
                 break;
             case O_ASN:
-                res = vr->val.i;
-                break;
             case O_COMMA:
                 res = vr->val.i;
+                break;
+            default:
                 break;
         }
         if (IS_ASSIGNOP(op))
@@ -554,14 +545,14 @@ static struct tbl* evalexpr (es, prec) Expr_state* es;
     return vl;
 }
 
-static void token (es) Expr_state* es;
+static void token (Expr_state* es)
 {
     const char* cp;
     int c;
     char* tvar;
 
     /* skip white space */
-    for (cp = es->tokp; (c = *cp), isspace((unsigned char) c); cp++)
+    for (cp = es->tokp; (c = (unsigned char) *cp), isspace((unsigned char) c); cp++)
     {
     }
     es->tokp = cp;
@@ -572,7 +563,7 @@ static void token (es) Expr_state* es;
     }
     else if (letter(c))
     {
-        for (; letnum(c); c = *cp)
+        for (; letnum(c); c = (unsigned char) *cp)
         {
             cp++;
         }
@@ -594,7 +585,6 @@ static void token (es) Expr_state* es;
              * abs acos asin atan cos cosh exp int log sin sinh sqrt
              * tan tanh
              */
-            ;
         }
 #endif /* KSH */
         if (es->noassign)
@@ -604,7 +594,7 @@ static void token (es) Expr_state* es;
         }
         else
         {
-            tvar = str_nsave(es->tokp, cp - es->tokp, ATEMP);
+            tvar = str_nsave(es->tokp, (int) (cp - es->tokp), ATEMP);
             es->val = global(tvar);
             afree(tvar, ATEMP);
         }
@@ -612,10 +602,10 @@ static void token (es) Expr_state* es;
     }
     else if (digit(c))
     {
-        for (; c != '_' && (letnum(c) || c == '#'); c = *cp++)
+        for (; c != '_' && (letnum(c) || c == '#'); c = (unsigned char) *cp++)
         {
         }
-        tvar = str_nsave(es->tokp, --cp - es->tokp, ATEMP);
+        tvar = str_nsave(es->tokp, (int) (--cp - es->tokp), ATEMP);
         es->val = tempvar();
         es->val->flag &= ~INTEGER;
         es->val->type = 0;
@@ -631,7 +621,7 @@ static void token (es) Expr_state* es;
     {
         int i, n0;
 
-        for (i = 0; (n0 = opinfo[i].name[0]); i++)
+        for (i = 0; (n0 = (unsigned char) opinfo[i].name[0]); i++)
         {
             if (c == n0 && strncmp(cp, opinfo[i].name, opinfo[i].len) == 0)
             {
@@ -657,7 +647,7 @@ static struct tbl* do_ppmm (Expr_state* es, enum token op, struct tbl* vasn, boo
     assign_check(es, op, vasn);
 
     vl = intvar(es, vasn);
-    oval = op == O_PLUSPLUS ? vl->val.i++ : vl->val.i--;
+    oval = (op == O_PLUSPLUS) ? (int) vl->val.i++ : (int) vl->val.i--;
     if (vasn->flag & INTEGER)
     {
         setint_v(vasn, vl);
@@ -674,9 +664,7 @@ static struct tbl* do_ppmm (Expr_state* es, enum token op, struct tbl* vasn, boo
     return vl;
 }
 
-static void assign_check (es, op, vasn) Expr_state* es;
-                                        enum token op;
-                                        struct tbl* vasn;
+static void assign_check (Expr_state* es, enum token op, struct tbl* vasn)
 {
     if (vasn->name[0] == '\0' && !(vasn->flag & EXPRLVALUE))
     {
@@ -688,7 +676,7 @@ static void assign_check (es, op, vasn) Expr_state* es;
     }
 }
 
-static struct tbl* tempvar ()
+static struct tbl* tempvar (void)
 {
     struct tbl* vp;
 
@@ -702,8 +690,7 @@ static struct tbl* tempvar ()
 }
 
 /* cast (string) variable to temporary integer variable */
-static struct tbl* intvar (es, vp) Expr_state* es;
-                                   struct tbl* vp;
+static struct tbl* intvar (Expr_state* es, struct tbl* vp)
 {
     struct tbl* vq;
 
