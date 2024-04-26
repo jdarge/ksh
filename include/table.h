@@ -157,9 +157,9 @@ extern const struct builtin shbuiltins[], kshbuiltins[];
 #define V_IFS               2
 #define V_SECONDS           3
 #define V_OPTIND            4
-#define V_MAIL              5
-#define V_MAILPATH          6
-#define V_MAILCHECK         7
+//#define V_MAIL              5
+//#define V_MAILPATH          6
+//#define V_MAILCHECK         7
 #define V_RANDOM            8
 #define V_HISTSIZE          9
 #define V_HISTFILE          10

@@ -167,14 +167,6 @@ Source* pushs ARGS((int, Area *));
 void set_prompt ARGS((int, Source *));
 void pprompt ARGS((const char *, int));
 
-/* mail.c */
-#ifdef KSH
-void mcheck ARGS((void));
-void mcset ARGS((long));
-void mbset ARGS((char *));
-void mpset ARGS((char *));
-#endif /* KSH */
-
 /* main.c */
 int include ARGS((const char *, int, char **, int));
 int command ARGS((const char *));

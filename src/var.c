@@ -112,7 +112,6 @@ void initvar ()
             { "VISUAL",		V_VISUAL },
 #endif /* EDIT */
 #ifdef KSH
-            {"MAIL", V_MAIL}, {"MAILCHECK", V_MAILCHECK}, {"MAILPATH", V_MAILPATH},
             {"RANDOM", V_RANDOM}, {"SECONDS", V_SECONDS}, {"TMOUT", V_TMOUT},
 #endif /* KSH */
             {"LINENO", V_LINENO}, {(char*) 0, 0}
@@ -1234,17 +1233,6 @@ static void setspec (vp) struct tbl* vp;
             break;
 #endif /* HISTORY */
 #ifdef KSH
-        case V_MAIL:
-            mbset(str_val(vp));
-            break;
-        case V_MAILPATH:
-            mpset(str_val(vp));
-            break;
-        case V_MAILCHECK:
-            vp->flag &= ~SPECIAL;
-            mcset(intval(vp));
-            vp->flag |= SPECIAL;
-            break;
         case V_RANDOM:
             vp->flag &= ~SPECIAL;
             srand((unsigned int) intval(vp));
@@ -1296,18 +1284,9 @@ static void unsetspec (vp) struct tbl* vp;
                 tmpdir = (char*) 0;
             }
             break;
-#ifdef KSH
-        case V_MAIL:
-            mbset((char*) 0);
-            break;
-        case V_MAILPATH:
-            mpset((char*) 0);
-            break;
-#endif /* KSH */
 
         case V_LINENO:
 #ifdef KSH
-        case V_MAILCHECK:    /* at&t ksh leaves previous value in place */
         case V_RANDOM:
         case V_SECONDS:
         case V_TMOUT:        /* at&t ksh leaves previous value in place */

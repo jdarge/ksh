@@ -35,8 +35,10 @@ static const char version_param[] =
 ;
 
 static const char* const initcoms[] = {
-        "typeset", "-x", "SHELL", "PATH", "HOME", NULL, "typeset", "-r", version_param, NULL,
-        "typeset", "-i", "PPID", NULL, "typeset", "-i", "OPTIND=1", NULL,
+        "typeset", "-x", "SHELL", "PATH", "HOME", NULL,
+        "typeset", "-r", version_param, NULL,
+        "typeset", "-i", "PPID", NULL,
+        "typeset", "-i", "OPTIND=1", NULL,
 #ifdef KSH
         "eval",
         "typeset -i RANDOM MAILCHECK=\"${MAILCHECK-600}\" SECONDS=\"${SECONDS-0}\" TMOUT=\"${TMOUT-0}\"",
@@ -65,8 +67,10 @@ static const char* const initcoms[] = {
 #endif /* KSH */
         NULL,
         /* this is what at&t ksh seems to track, with the addition of emacs */
-        "alias", "-tU", "cat", "cc", "chmod", "cp", "date", "ed", "emacs", "grep", "ls", "mail",
-        "make", "mv", "pr", "rm", "sed", "sh", "vi", "who", NULL,
+        "alias", "-tU", "cat", "cc", "chmod", "cp",
+        "date", "ed", "emacs", "grep", "ls", "make",
+        "mv", "pr", "rm", "sed", "sh", "vi", "who",
+        NULL,
 #ifdef EXTRA_INITCOMS
         EXTRA_INITCOMS, NULL,
 #endif /* EXTRA_INITCOMS */
@@ -616,9 +620,6 @@ int shell (
         if (interactive)
         {
             j_notify();
-#ifdef KSH
-            mcheck();
-#endif /* KSH */
             set_prompt(PS1, s);
         }
 
