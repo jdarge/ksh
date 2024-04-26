@@ -16,14 +16,12 @@ static int initio_done;
 
 
 /* A shell error occurred (eg, syntax error, etc.) */
-void errorf (const char* fmt, ...)
-{
+void errorf(const char *fmt, ...) {
     va_list va;
 
     shl_stdout_ok = 0;    /* debugging: note that stdout not valid */
     exstat = 1;
-    if (*fmt)
-    {
+    if (*fmt) {
         error_prefix(true);
         va_start(va, fmt);
         shf_vfprintf(shl_out, fmt, va);
@@ -35,8 +33,7 @@ void errorf (const char* fmt, ...)
 }
 
 /* like errorf(), but no unwind is done */
-void warningf (int fileline, const char* fmt, ...)
-{
+void warningf(int fileline, const char *fmt, ...) {
     va_list va;
 
     error_prefix(fileline);
@@ -50,18 +47,15 @@ void warningf (int fileline, const char* fmt, ...)
 /* Used by built-in utilities to prefix shell and utility name to message
  * (also unwinds environments for special builtins).
  */
-void bi_errorf (const char* fmt, ...)
-{
+void bi_errorf(const char *fmt, ...) {
     va_list va;
 
     shl_stdout_ok = 0;    /* debugging: note that stdout not valid */
     exstat = 1;
-    if (*fmt)
-    {
+    if (*fmt) {
         error_prefix(true);
         /* not set when main() calls parse_args() */
-        if (builtin_argv0)
-        {
+        if (builtin_argv0) {
             shf_fprintf(shl_out, "%s: ", builtin_argv0);
         }
         va_start(va, fmt);
@@ -74,16 +68,14 @@ void bi_errorf (const char* fmt, ...)
      * non-interactive shells to exit.
      * XXX odd use of KEEPASN; also may not want LERROR here
      */
-    if ((builtin_flag & SPEC_BI) || (Flag(FPOSIX) && (builtin_flag & KEEPASN)))
-    {
-        builtin_argv0 = (char*) 0;
+    if ((builtin_flag & SPEC_BI) || (Flag(FPOSIX) && (builtin_flag & KEEPASN))) {
+        builtin_argv0 = (char *) 0;
         unwind(LERROR);
     }
 }
 
 /* Called when something that shouldn't happen does */
-void internal_errorf (int jump, const char* fmt, ...)
-{
+void internal_errorf(int jump, const char *fmt, ...) {
     va_list va;
 
     error_prefix(true);
@@ -93,22 +85,18 @@ void internal_errorf (int jump, const char* fmt, ...)
     va_end(va);
     shf_putchar('\n', shl_out);
     shf_flush(shl_out);
-    if (jump)
-    {
+    if (jump) {
         unwind(LERROR);
     }
 }
 
 /* used by error reporting functions to print "ksh: .kshrc[25]: " */
-void error_prefix (int fileline)
-{
+void error_prefix(int fileline) {
     /* Avoid foo: foo[2]: ... */
-    if (!fileline || !source || !source->file || strcmp(source->file, kshname) != 0)
-    {
+    if (!fileline || !source || !source->file || strcmp(source->file, kshname) != 0) {
         shf_fprintf(shl_out, "%s: ", kshname + (*kshname == '-'));
     }
-    if (fileline && source && source->file != NULL)
-    {
+    if (fileline && source && source->file != NULL) {
         shf_fprintf(shl_out, "%s[%d]: ", source->file,
                     source->errline > 0 ? source->errline : source->line
         );
@@ -117,12 +105,10 @@ void error_prefix (int fileline)
 }
 
 /* printf to shl_out (stderr) with flush */
-void shellf (const char* fmt, ...)
-{
+void shellf(const char *fmt, ...) {
     va_list va;
 
-    if (!initio_done)
-    { /* shl_out may not be set up yet... */
+    if (!initio_done) { /* shl_out may not be set up yet... */
         return;
     }
     va_start(va, fmt);
@@ -132,12 +118,10 @@ void shellf (const char* fmt, ...)
 }
 
 /* printf to shl_stdout (stdout) */
-void shprintf (const char* fmt, ...)
-{
+void shprintf(const char *fmt, ...) {
     va_list va;
 
-    if (!shl_stdout_ok)
-    {
+    if (!shl_stdout_ok) {
         internal_errorf(1, "shl_stdout not valid");
     }
     va_start(va, fmt);
@@ -203,8 +187,7 @@ kshdebug_dump_(str, mem, nbytes)
 #endif /* KSH_DEBUG */
 
 /* test if we can seek backwards fd (returns 0 or SHF_UNBUF) */
-int can_seek (int fd)
-{
+int can_seek(int fd) {
     struct stat statb;
 
     return fstat(fd, &statb) == 0 && !S_ISREG(statb.st_mode) ? SHF_UNBUF : 0;
@@ -212,8 +195,7 @@ int can_seek (int fd)
 
 struct shf shf_iob[3];
 
-void initio (void)
-{
+void initio(void) {
     shf_fdopen(1, SHF_WR, shl_stdout);    /* force buffer allocation */
     shf_fdopen(2, SHF_WR, shl_out);
     shf_fdopen(2, SHF_WR, shl_spare);    /* force buffer allocation */
@@ -222,12 +204,10 @@ void initio (void)
 }
 
 /* A dup2() with error checking */
-int ksh_dup2 (int ofd, int nfd, int errok)
-{
+int ksh_dup2(int ofd, int nfd, int errok) {
     int ret = dup2(ofd, nfd);
 
-    if (ret < 0 && errno != EBADF && !errok)
-    {
+    if (ret < 0 && errno != EBADF && !errok) {
         errorf("too many files open in shell");
     }
 
@@ -238,66 +218,49 @@ int ksh_dup2 (int ofd, int nfd, int errok)
  * move fd from user space (0<=fd<10) to shell space (fd>=10),
  * set close-on-exec flag.
  */
-int savefd (int fd, int noclose)
-{
+int savefd(int fd, int noclose) {
     int nfd;
 
-    if (fd < FDBASE)
-    {
+    if (fd < FDBASE) {
         nfd = ksh_dupbase(fd, FDBASE);
-        if (nfd < 0)
-        {
-            if (errno == EBADF)
-            {
+        if (nfd < 0) {
+            if (errno == EBADF) {
                 return -1;
-            }
-            else
-            {
+            } else {
                 errorf("too many files open in shell");
             }
         }
-        if (!noclose)
-        {
+        if (!noclose) {
             close(fd);
         }
-    }
-    else
-    {
+    } else {
         nfd = fd;
     }
     fd_clexec(nfd);
     return nfd;
 }
 
-void restfd (int fd, int ofd)
-{
-    if (fd == 2)
-    {
+void restfd(int fd, int ofd) {
+    if (fd == 2) {
         shf_flush(&shf_iob[fd]);
     }
-    if (ofd < 0)
-    {        /* original fd closed */
+    if (ofd < 0) {        /* original fd closed */
         close(fd);
-    }
-    else if (fd != ofd)
-    {
+    } else if (fd != ofd) {
         ksh_dup2(ofd, fd, true); /* XXX: what to do if this fails? */
         close(ofd);
     }
 }
 
-void openpipe (int* pv)
-{
-    if (pipe(pv) < 0)
-    {
+void openpipe(int *pv) {
+    if (pipe(pv) < 0) {
         errorf("can't create pipe - try again");
     }
     pv[0] = savefd(pv[0], 0);
     pv[1] = savefd(pv[1], 0);
 }
 
-void closepipe (int* pv)
-{
+void closepipe(int *pv) {
     close(pv[0]);
     close(pv[1]);
 }
@@ -305,16 +268,12 @@ void closepipe (int* pv)
 /* Called by iosetup() (deals with 2>&4, etc.), c_read, c_print to turn
  * a string (the X in 2>&X, read -uX, print -uX) into a file descriptor.
  */
-int check_fd (const char* name, int mode, const char** emsgp)
-{
+int check_fd(const char *name, int mode, const char **emsgp) {
     int fd, fl;
 
-    if (isdigit((unsigned char) name[0]) && !name[1])
-    {
-        if ((fl = fcntl(fd = name[0] - '0', F_GETFL, 0)) < 0)
-        {
-            if (emsgp)
-            {
+    if (isdigit((unsigned char) name[0]) && !name[1]) {
+        if ((fl = fcntl(fd = name[0] - '0', F_GETFL, 0)) < 0) {
+            if (emsgp) {
                 *emsgp = "bad file descriptor";
             }
             return -1;
@@ -327,10 +286,8 @@ int check_fd (const char* name, int mode, const char** emsgp)
          */
         if (!(mode & X_OK) && fl != O_RDWR && (
                 ((mode & R_OK) && fl != O_RDONLY) || ((mode & W_OK) && fl != O_WRONLY)
-        ))
-        {
-            if (emsgp)
-            {
+        )) {
+            if (emsgp) {
                 *emsgp = (fl == O_WRONLY) ? "fd not open for reading" : "fd not open for writing";
             }
             return -1;
@@ -338,13 +295,11 @@ int check_fd (const char* name, int mode, const char** emsgp)
         return fd;
     }
 #ifdef KSH
-    else if (name[0] == 'p' && !name[1])
-    {
+    else if (name[0] == 'p' && !name[1]) {
         return coproc_getfd(mode, emsgp);
     }
 #endif /* KSH */
-    if (emsgp)
-    {
+    if (emsgp) {
         *emsgp = "illegal file descriptor name";
     }
     return -1;
@@ -353,18 +308,15 @@ int check_fd (const char* name, int mode, const char** emsgp)
 #ifdef KSH
 
 /* Called once from main */
-void coproc_init (void)
-{
+void coproc_init(void) {
     coproc.read = coproc.readw = coproc.write = -1;
     coproc.njobs = 0;
     coproc.id = 0;
 }
 
 /* Called by c_read() when eof is read - close fd if it is the co-process fd */
-void coproc_read_close (int fd)
-{
-    if (coproc.read >= 0 && fd == coproc.read)
-    {
+void coproc_read_close(int fd) {
+    if (coproc.read >= 0 && fd == coproc.read) {
         coproc_readw_close(fd);
         close(coproc.read);
         coproc.read = -1;
@@ -374,10 +326,8 @@ void coproc_read_close (int fd)
 /* Called by c_read() and by iosetup() to close the other side of the
  * read pipe, so reads will actually terminate.
  */
-void coproc_readw_close (int fd)
-{
-    if (coproc.readw >= 0 && coproc.read >= 0 && fd == coproc.read)
-    {
+void coproc_readw_close(int fd) {
+    if (coproc.readw >= 0 && coproc.read >= 0 && fd == coproc.read) {
         close(coproc.readw);
         coproc.readw = -1;
     }
@@ -386,10 +336,8 @@ void coproc_readw_close (int fd)
 /* Called by c_print when a write to a fd fails with EPIPE and by iosetup
  * when co-process input is dup'd
  */
-void coproc_write_close (int fd)
-{
-    if (coproc.write >= 0 && fd == coproc.write)
-    {
+void coproc_write_close(int fd) {
+    if (coproc.write >= 0 && fd == coproc.write) {
         close(coproc.write);
         coproc.write = -1;
     }
@@ -398,16 +346,13 @@ void coproc_write_close (int fd)
 /* Called to check for existence of/value of the co-process file descriptor.
  * (Used by check_fd() and by c_read/c_print to deal with -p option).
  */
-int coproc_getfd (int mode, const char** emsgp)
-{
+int coproc_getfd(int mode, const char **emsgp) {
     int fd = (mode & R_OK) ? coproc.read : coproc.write;
 
-    if (fd >= 0)
-    {
+    if (fd >= 0) {
         return fd;
     }
-    if (emsgp)
-    {
+    if (emsgp) {
         *emsgp = "no coprocess";
     }
     return -1;
@@ -416,28 +361,24 @@ int coproc_getfd (int mode, const char** emsgp)
 /* called to close file descriptors related to the coprocess (if any)
  * Should be called with SIGCHLD blocked.
  */
-void coproc_cleanup (int reuse)
-{
+void coproc_cleanup(int reuse) {
     /* This to allow co-processes to share output pipe */
-    if (!reuse || coproc.readw < 0 || coproc.read < 0)
-    {
-        if (coproc.read >= 0)
-        {
+    if (!reuse || coproc.readw < 0 || coproc.read < 0) {
+        if (coproc.read >= 0) {
             close(coproc.read);
             coproc.read = -1;
         }
-        if (coproc.readw >= 0)
-        {
+        if (coproc.readw >= 0) {
             close(coproc.readw);
             coproc.readw = -1;
         }
     }
-    if (coproc.write >= 0)
-    {
+    if (coproc.write >= 0) {
         close(coproc.write);
         coproc.write = -1;
     }
 }
+
 #endif /* KSH */
 
 
@@ -445,23 +386,22 @@ void coproc_cleanup (int reuse)
  * temporary files
  */
 
-struct temp* maketemp (Area* ap, Temp_type type, struct temp** tlist)
-{
+struct temp *maketemp(Area *ap, Temp_type type, struct temp **tlist) {
 #ifndef __NetBSD__
     static unsigned int inc;
 #endif
-    struct temp* tp;
+    struct temp *tp;
     int len;
     int fd;
-    char* pathx;
-    const char* dir;
+    char *pathx;
+    const char *dir;
 
     dir = tmpdir ? tmpdir : "/tmp";
     /* The 20 + 20 is a paranoid worst case for pid/inc */
     len = (int) strlen(dir) + 3 + 20 + 20 + 1;
-    tp = (struct temp*) alloc(sizeof(struct temp) + len, ap);
-    tp->name = pathx = (char*) &tp[1];
-    tp->shf = (struct shf*) 0;
+    tp = (struct temp *) alloc(sizeof(struct temp) + len, ap);
+    tp->name = pathx = (char *) &tp[1];
+    tp->shf = (struct shf *) 0;
     tp->type = type;
 #ifdef __NetBSD__
     shf_snprintf(pathx, len, "%s/shXXXXXXXX", dir);
@@ -469,17 +409,15 @@ struct temp* maketemp (Area* ap, Temp_type type, struct temp** tlist)
     if (fd >= 0)
         tp->shf = shf_fdopen(fd, SHF_WR, (struct shf *) 0);
 #else
-    while (1)
-    {
+    while (1) {
         /* Note that temp files need to fit 8.3 DOS limits */
         shf_snprintf(pathx, len, "%s/sh%05u.%03x", dir, (unsigned) procpid, inc++);
         /* Mode 0600 to be paranoid, O_TRUNC in case O_EXCL isn't
          * really there.
          */
         fd = open(pathx, O_RDWR | O_CREAT | O_EXCL | O_TRUNC, 0600);
-        if (fd >= 0)
-        {
-            tp->shf = shf_fdopen(fd, SHF_WR, (struct shf*) 0);
+        if (fd >= 0) {
+            tp->shf = shf_fdopen(fd, SHF_WR, (struct shf *) 0);
             break;
         }
         if (errno != EINTR
@@ -489,8 +427,7 @@ struct temp* maketemp (Area* ap, Temp_type type, struct temp** tlist)
             #ifdef EISDIR
             && errno != EISDIR
 #endif /* EISDIR */
-                )
-        {
+                ) {
             /* Error must be printed by caller: don't know here if
              * errorf() or bi_errorf() should be used.
              */
