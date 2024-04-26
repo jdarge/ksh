@@ -462,7 +462,6 @@ void expand(char *cp, XPtrV *wp, int f) {
                         c = /*(*/ ')';
                         break;
                     default:
-                        errorf("eval.c: How did this even happen (1)?");
                         break;
                 }
                 break;
@@ -560,7 +559,7 @@ void expand(char *cp, XPtrV *wp, int f) {
                 }
                 break;
             default:
-                errorf("eval.c: How did this even happen (2)?");
+                break;
         }
 
         /* check for end of word or IFS separation */
@@ -686,7 +685,7 @@ void expand(char *cp, XPtrV *wp, int f) {
                         }
                         break;
                     default:
-                        errorf("eval.c: How did this even happen (3)?");
+                        break;
                 }
             } else {
                 quote &= ~2;
