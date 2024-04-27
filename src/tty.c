@@ -1,22 +1,17 @@
 /*	$NetBSD: tty.c,v 1.10 2021/07/24 21:31:31 andvar Exp $	*/
 
-#include <sys/cdefs.h>
-
-#include <sys/stat.h>
-
 #include "sh.h"
 #define EXTERN
 #include "tty.h"
 #undef EXTERN
 
-int get_tty (fd, ts) int fd;
-                     TTY_state* ts;
+int get_tty (int fd, TTY_state* ts)
 {
     int ret;
 
 # ifdef HAVE_TERMIOS_H
     ret = tcgetattr(fd, ts);
-# else /* HAVE_TERIOS_H */
+# else /* HAVE_TERMIOS_H */
 #  ifdef HAVE_TERMIO_H
     ret = ioctl(fd, TCGETA, ts);
 #  else /* HAVE_TERMIO_H */
@@ -33,22 +28,20 @@ int get_tty (fd, ts) int fd;
 #    endif /* TIOCGLTC */
 #   endif /* TIOCGATC */
 #  endif /* HAVE_TERMIO_H */
-# endif /* HAVE_TERIOS_H */
+# endif /* HAVE_TERMIOS_H */
     return ret;
 }
 
-int set_tty (fd, ts, flags) int fd;
-                            TTY_state* ts;
-                            int flags;
+int set_tty (int fd, TTY_state* ts, int flags)
 {
 
     (void) flags; /* fixme: unused var */
 
-    int ret = 0;
+    int ret;
 
 # ifdef HAVE_TERMIOS_H
     ret = tcsetattr(fd, TCSADRAIN, ts);
-# else /* HAVE_TERIOS_H */
+# else /* HAVE_TERMIOS_H */
 #  ifdef HAVE_TERMIO_H
 #   ifndef TCSETAW				/* e.g. Cray-2 */
     /* first wait for output to drain */
@@ -82,7 +75,7 @@ if (ioctl(fd, TIOCSLTC, &ts->ltchars) < 0)
 #    endif /* TIOCGLTC */
 #   endif /* TIOCGATC */
 #  endif /* HAVE_TERMIO_H */
-# endif /* HAVE_TERIOS_H */
+# endif /* HAVE_TERMIOS_H */
     return ret;
 }
 
@@ -90,7 +83,7 @@ if (ioctl(fd, TIOCSLTC, &ts->ltchars) < 0)
 /* Initialize tty_fd.  Used for saving/resetting tty modes upon
  * foreground job completion and for setting up tty process group.
  */
-void tty_init (init_ttystate) int init_ttystate;
+void tty_init (int init_ttystate)
 {
     int do_close = 1;
     int tfd;
@@ -149,7 +142,7 @@ void tty_init (init_ttystate) int init_ttystate;
     }
 }
 
-void tty_close ()
+void tty_close (void)
 {
     if (tty_fd >= 0)
     {
