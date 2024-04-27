@@ -14,7 +14,9 @@
  */
 
 #ifdef S_ISLNK
-static char* do_phys_path ARGS((XString * , char *, const char *));
+
+static char *do_phys_path ARGS((XString * , char *, const char *));
+
 #endif /* S_ISLNK */
 
 /*
@@ -32,59 +34,46 @@ static char* do_phys_path ARGS((XString * , char *, const char *));
  *	The return value indicates whether a non-null element from cdpathp
  *	was appended to result.
  */
-int make_path (const char* cwd, const char* file, char** cdpathp, XString* xsp, int* phys_pathp)
-{
+int make_path(const char *cwd, const char *file, char **cdpathp, XString *xsp, int *phys_pathp) {
     int rval = 0;
     int use_cdpath = 1;
-    char* plist;
+    char *plist;
     int len;
     int plen = 0;
-    char* xp = Xstring(*xsp, xp);
+    char *xp = Xstring(*xsp, xp);
 
-    if (!file)
-    {
+    if (!file) {
         file = null;
     }
 
-    if (!ISRELPATH(file))
-    {
+    if (!ISRELPATH(file)) {
         *phys_pathp = 0;
         use_cdpath = 0;
-    }
-    else
-    {
-        if (file[0] == '.')
-        {
+    } else {
+        if (file[0] == '.') {
             char c = file[1];
 
-            if (c == '.')
-            {
+            if (c == '.') {
                 c = file[2];
             }
-            if (ISDIRSEP(c) || c == '\0')
-            {
+            if (ISDIRSEP(c) || c == '\0') {
                 use_cdpath = 0;
             }
         }
 
         plist = *cdpathp;
-        if (!plist)
-        {
+        if (!plist) {
             use_cdpath = 0;
-        }
-        else if (use_cdpath)
-        {
-            char* pend;
+        } else if (use_cdpath) {
+            char *pend;
 
-            for (pend = plist; *pend && *pend != PATHSEP; pend++)
-            {
+            for (pend = plist; *pend && *pend != PATHSEP; pend++) {
             }
             plen = (int) (pend - plist);
-            *cdpathp = *pend ? ++pend : (char*) 0;
+            *cdpathp = *pend ? ++pend : (char *) 0;
         }
 
-        if ((use_cdpath == 0 || !plen || ISRELPATH(plist)) && (cwd && *cwd))
-        {
+        if ((use_cdpath == 0 || !plen || ISRELPATH(plist)) && (cwd && *cwd)) {
             len = (int) strlen(cwd);
             XcheckN(*xsp, xp, len);
             memcpy(xp, cwd, len);
@@ -93,8 +82,7 @@ int make_path (const char* cwd, const char* file, char** cdpathp, XString* xsp, 
                 Xput(*xsp, xp, DIRSEP);
         }
         *phys_pathp = Xlength(*xsp, xp);
-        if (use_cdpath && plen)
-        {
+        if (use_cdpath && plen) {
             XcheckN(*xsp, xp, plen);
             memcpy(xp, plist, plen);
             xp += plen;
@@ -108,9 +96,8 @@ int make_path (const char* cwd, const char* file, char** cdpathp, XString* xsp, 
     XcheckN(*xsp, xp, len);
     memcpy(xp, file, len);
 
-    if (!use_cdpath)
-    {
-        *cdpathp = (char*) 0;
+    if (!use_cdpath) {
+        *cdpathp = (char *) 0;
     }
 
     return rval;
@@ -120,21 +107,18 @@ int make_path (const char* cwd, const char* file, char** cdpathp, XString* xsp, 
  * Simplify pathnames containing "." and ".." entries.
  * ie, simplify_path("/a/b/c/./../d/..") returns "/a/b"
  */
-void simplify_path (char* pathx)
-{
-    char* cur;
-    char* t;
+void simplify_path(char *pathx) {
+    char *cur;
+    char *t;
     int isrooted;
-    char* very_start = pathx;
-    char* start;
+    char *very_start = pathx;
+    char *start;
 
-    if (!*pathx)
-    {
+    if (!*pathx) {
         return;
     }
 
-    if ((isrooted = ISROOTEDPATH(pathx)))
-    {
+    if ((isrooted = ISROOTEDPATH(pathx))) {
         very_start++;
     }
 
@@ -148,18 +132,14 @@ void simplify_path (char* pathx)
      *  foo/../../../bar		../../bar
      */
 
-    for (cur = t = start = very_start;;)
-    {
+    for (cur = t = start = very_start;;) {
         /* treat multiple '/'s as one '/' */
-        while (ISDIRSEP(*t))
-        {
+        while (ISDIRSEP(*t)) {
             t++;
         }
 
-        if (*t == '\0')
-        {
-            if (cur == pathx)
-            {
+        if (*t == '\0') {
+            if (cur == pathx) {
                 /* convert empty path to dot */
                 *cur++ = '.';
             }
@@ -167,29 +147,20 @@ void simplify_path (char* pathx)
             break;
         }
 
-        if (t[0] == '.')
-        {
-            if (!t[1] || ISDIRSEP(t[1]))
-            {
+        if (t[0] == '.') {
+            if (!t[1] || ISDIRSEP(t[1])) {
                 t += 1;
                 continue;
-            }
-            else if (t[1] == '.' && (!t[2] || ISDIRSEP(t[2])))
-            {
-                if (!isrooted && cur == start)
-                {
-                    if (cur != very_start)
-                    {
+            } else if (t[1] == '.' && (!t[2] || ISDIRSEP(t[2]))) {
+                if (!isrooted && cur == start) {
+                    if (cur != very_start) {
                         *cur++ = DIRSEP;
                     }
                     *cur++ = '.';
                     *cur++ = '.';
                     start = cur;
-                }
-                else if (cur != start)
-                {
-                    while (--cur > start && !ISDIRSEP(*cur))
-                    {
+                } else if (cur != start) {
+                    while (--cur > start && !ISDIRSEP(*cur)) {
                     }
                 }
                 t += 2;
@@ -197,56 +168,49 @@ void simplify_path (char* pathx)
             }
         }
 
-        if (cur != very_start)
-        {
+        if (cur != very_start) {
             *cur++ = DIRSEP;
         }
 
         /* find/copy next component of pathname */
-        while (*t && !ISDIRSEP(*t))
-        {
+        while (*t && !ISDIRSEP(*t)) {
             *cur++ = *t++;
         }
     }
 }
 
 
-void set_current_wd (char* pathx)
-{
+void set_current_wd(char *pathx) {
     int len;
-    char* p = pathx;
+    char *p = pathx;
 
-    if (!p && !(p = ksh_get_wd((char*) 0, 0)))
-    {
+    if (!p && !(p = ksh_get_wd((char *) 0, 0))) {
         p = null;
     }
 
     len = (int) strlen(p) + 1;
 
-    if (len > current_wd_size)
-    {
+    if (len > current_wd_size) {
         current_wd = aresize(current_wd, current_wd_size = len, APERM);
     }
     memcpy(current_wd, p, len);
-    if (p != pathx && p != null)
-    {
+    if (p != pathx && p != null) {
         afree(p, ATEMP);
     }
 }
 
 #ifdef S_ISLNK
-char* get_phys_path (const char* pathx)
-{
+
+char *get_phys_path(const char *pathx) {
     XString xs;
-    char* xp;
+    char *xp;
 
     Xinit(xs, xp, strlen(pathx) + 1, ATEMP);
 
     xp = do_phys_path(&xs, xp, pathx);
 
-    if (!xp)
-    {
-        return (char*) 0;
+    if (!xp) {
+        return (char *) 0;
     }
 
     if (Xlength(xs, xp) == 0)
@@ -256,36 +220,28 @@ char* get_phys_path (const char* pathx)
     return Xclose(xs, xp);
 }
 
-static char* do_phys_path (XString* xsp, char* xp, const char* pathx)
-{
-    const char* p, * q;
+static char *do_phys_path(XString *xsp, char *xp, const char *pathx) {
+    const char *p, *q;
     int len, llen;
     int savepos;
     char lbuf[PATH];
 
     Xcheck(*xsp, xp);
-    for (p = pathx; p; p = q)
-    {
-        while (ISDIRSEP(*p))
-        {
+    for (p = pathx; p; p = q) {
+        while (ISDIRSEP(*p)) {
             p++;
         }
-        if (!*p)
-        {
+        if (!*p) {
             break;
         }
         len = (q = ksh_strchr_dirsep(p)) ? (int) (q - p) : (int) strlen(p);
-        if (len == 1 && p[0] == '.')
-        {
+        if (len == 1 && p[0] == '.') {
             continue;
         }
-        if (len == 2 && p[0] == '.' && p[1] == '.')
-        {
-            while (xp > Xstring(*xsp, xp))
-            {
+        if (len == 2 && p[0] == '.' && p[1] == '.') {
+            while (xp > Xstring(*xsp, xp)) {
                 xp--;
-                if (ISDIRSEP(*xp))
-                {
+                if (ISDIRSEP(*xp)) {
                     break;
                 }
             }
@@ -300,12 +256,10 @@ static char* do_phys_path (XString* xsp, char* xp, const char* pathx)
         *xp = '\0';
 
         llen = (int) readlink(Xstring(*xsp, xp), lbuf, sizeof(lbuf) - 1);
-        if (llen < 0)
-        {
+        if (llen < 0) {
             /* EINVAL means it wasn't a symlink... */
-            if (errno != EINVAL)
-            {
-                return (char*) 0;
+            if (errno != EINVAL) {
+                return (char *) 0;
             }
             continue;
         }
@@ -313,13 +267,13 @@ static char* do_phys_path (XString* xsp, char* xp, const char* pathx)
 
         /* If absolute path, start from scratch.. */
         xp = ISABSPATH(lbuf) ? Xstring(*xsp, xp) : Xrestpos(*xsp, xp, savepos);
-        if (!(xp = do_phys_path(xsp, xp, lbuf)))
-        {
-            return (char*) 0;
+        if (!(xp = do_phys_path(xsp, xp, lbuf))) {
+            return (char *) 0;
         }
     }
     return xp;
 }
+
 #endif /* S_ISLNK */
 
 #ifdef    TEST
