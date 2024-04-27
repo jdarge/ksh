@@ -1,5 +1,4 @@
 /*	$NetBSD: path.c,v 1.14 2022/10/31 21:22:05 andvar Exp $	*/
-#include <sys/cdefs.h>
 
 #include <sys/stat.h>
 
@@ -33,11 +32,7 @@ static char* do_phys_path ARGS((XString * , char *, const char *));
  *	The return value indicates whether a non-null element from cdpathp
  *	was appended to result.
  */
-int make_path (cwd, file, cdpathp, xsp, phys_pathp) const char* cwd;
-                                                    const char* file;
-                                                    char** cdpathp;    /* & of : separated list */
-                                                    XString* xsp;
-                                                    int* phys_pathp;
+int make_path (const char* cwd, const char* file, char** cdpathp, XString* xsp, int* phys_pathp)
 {
     int rval = 0;
     int use_cdpath = 1;
@@ -84,13 +79,13 @@ int make_path (cwd, file, cdpathp, xsp, phys_pathp) const char* cwd;
             for (pend = plist; *pend && *pend != PATHSEP; pend++)
             {
             }
-            plen = pend - plist;
+            plen = (int) (pend - plist);
             *cdpathp = *pend ? ++pend : (char*) 0;
         }
 
         if ((use_cdpath == 0 || !plen || ISRELPATH(plist)) && (cwd && *cwd))
         {
-            len = strlen(cwd);
+            len = (int) strlen(cwd);
             XcheckN(*xsp, xp, len);
             memcpy(xp, cwd, len);
             xp += len;
@@ -109,7 +104,7 @@ int make_path (cwd, file, cdpathp, xsp, phys_pathp) const char* cwd;
         }
     }
 
-    len = strlen(file) + 1;
+    len = (int) strlen(file) + 1;
     XcheckN(*xsp, xp, len);
     memcpy(xp, file, len);
 
@@ -125,7 +120,7 @@ int make_path (cwd, file, cdpathp, xsp, phys_pathp) const char* cwd;
  * Simplify pathnames containing "." and ".." entries.
  * ie, simplify_path("/a/b/c/./../d/..") returns "/a/b"
  */
-void simplify_path (pathx) char* pathx;
+void simplify_path (char* pathx)
 {
     char* cur;
     char* t;
@@ -216,7 +211,7 @@ void simplify_path (pathx) char* pathx;
 }
 
 
-void set_current_wd (pathx) char* pathx;
+void set_current_wd (char* pathx)
 {
     int len;
     char* p = pathx;
@@ -226,7 +221,7 @@ void set_current_wd (pathx) char* pathx;
         p = null;
     }
 
-    len = strlen(p) + 1;
+    len = (int) strlen(p) + 1;
 
     if (len > current_wd_size)
     {
@@ -240,7 +235,7 @@ void set_current_wd (pathx) char* pathx;
 }
 
 #ifdef S_ISLNK
-char* get_phys_path (pathx) const char* pathx;
+char* get_phys_path (const char* pathx)
 {
     XString xs;
     char* xp;
@@ -261,9 +256,7 @@ char* get_phys_path (pathx) const char* pathx;
     return Xclose(xs, xp);
 }
 
-static char* do_phys_path (xsp, xp, pathx) XString* xsp;
-                                           char* xp;
-                                           const char* pathx;
+static char* do_phys_path (XString* xsp, char* xp, const char* pathx)
 {
     const char* p, * q;
     int len, llen;
@@ -281,7 +274,7 @@ static char* do_phys_path (xsp, xp, pathx) XString* xsp;
         {
             break;
         }
-        len = (q = ksh_strchr_dirsep(p)) ? q - p : (int) strlen(p);
+        len = (q = ksh_strchr_dirsep(p)) ? (int) (q - p) : (int) strlen(p);
         if (len == 1 && p[0] == '.')
         {
             continue;
@@ -306,7 +299,7 @@ static char* do_phys_path (xsp, xp, pathx) XString* xsp;
         xp += len;
         *xp = '\0';
 
-        llen = readlink(Xstring(*xsp, xp), lbuf, sizeof(lbuf) - 1);
+        llen = (int) readlink(Xstring(*xsp, xp), lbuf, sizeof(lbuf) - 1);
         if (llen < 0)
         {
             /* EINVAL means it wasn't a symlink... */
