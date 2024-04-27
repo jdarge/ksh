@@ -3,7 +3,6 @@
 /*
  * value of $KSH_VERSION (or $SH_VERSION)
  */
-#include <sys/cdefs.h>
 
 #include "sh.h"
 
