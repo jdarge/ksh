@@ -19,64 +19,66 @@
  */
 typedef struct lex_state Lex_state;
 
-struct lex_state
-{
+struct lex_state {
     int ls_state;
-    union
-    {
+    union {
         /* $(...) */
-        struct scsparen_info
-        {
-            int nparen;        /* count open parenthesis */
-            int csstate; /* XXX remove */
+        struct scsparen_info {
+            int nparen;         /* count open parenthesis */
+            int csstate;        /* XXX remove */
 #define ls_scsparen ls_info.u_scsparen
         } u_scsparen;
 
         /* $((...)) */
-        struct sasparen_info
-        {
-            int nparen;        /* count open parenthesis */
-            int start;        /* marks start of $(( in output str */
+        struct sasparen_info {
+            int nparen;         /* count open parenthesis */
+            int start;          /* marks start of $(( in output str */
 #define ls_sasparen ls_info.u_sasparen
         } u_sasparen;
 
         /* ((...)) */
-        struct sletparen_info
-        {
-            int nparen;        /* count open parenthesis */
+        struct sletparen_info {
+            int nparen;         /* count open parenthesis */
 #define ls_sletparen ls_info.u_sletparen
         } u_sletparen;
 
         /* `...` */
-        struct sbquote_info
-        {
-            int indquotes;    /* true if in double quotes: "`...`" */
+        struct sbquote_info {
+            int indquotes;      /* true if in double quotes: "`...`" */
 #define ls_sbquote ls_info.u_sbquote
         } u_sbquote;
 
-        Lex_state* base;        /* used to point to next state block */
+        Lex_state *base;        /* used to point to next state block */
     } ls_info;
 };
 
 typedef struct State_info State_info;
 
-struct State_info
-{
-    Lex_state* base;
-    Lex_state* end;
+struct State_info {
+    Lex_state *base;
+    Lex_state *end;
 };
 
 
 static void readhere ARGS((struct ioword *iop));
+
 static int getsc__ ARGS((void));
+
 static void getsc_line ARGS((Source * s));
+
 static int getsc_bn ARGS((void));
-static char* get_brace_var ARGS((XString * wsp, char* wp));
+
+static char *get_brace_var ARGS((XString * wsp, char *wp));
+
 static int arraysub ARGS((char **strp));
-static const char* ungetsc ARGS((int c));
+
+static const char *ungetsc ARGS((int c));
+
 static void gethere ARGS((void));
-static Lex_state* push_state_ ARGS((State_info * si, Lex_state * old_end));
-static Lex_state* pop_state_ ARGS((State_info * si, Lex_state * old_end));
+
+static Lex_state *push_state_ ARGS((State_info * si, Lex_state * old_end));
+
+static Lex_state *pop_state_ ARGS((State_info * si, Lex_state * old_end));
 
 static int backslash_skip;
 
@@ -111,20 +113,19 @@ static int ignore_backslash_newline;
  * hence the state stack.
  */
 
-int yylex (int cf)
-{
-    Lex_state states[STATE_BSIZE], * statep;
+int yylex(int cf) {
+    Lex_state states[STATE_BSIZE], *statep;
     State_info state_info;
     int c, state;
-    XString ws;        /* expandable output word */
-    char* wp;        /* output word pointer */
-    char* sp, * dp;
+    XString ws;         /* expandable output word */
+    char *wp;           /* output word pointer */
+    char *sp, *dp;
     int c2;
 
 
     Again:
     states[0].ls_state = -1;
-    states[0].ls_info.base = (Lex_state*) 0;
+    states[0].ls_info.base = (Lex_state *) 0;
     statep = &states[1];
     state_info.base = states;
     state_info.end = &states[STATE_BSIZE];
@@ -134,42 +135,34 @@ int yylex (int cf)
     backslash_skip = 0;
     ignore_backslash_newline = 0;
 
-    if (cf & ONEWORD)
-    {
+    if (cf & ONEWORD) {
         state = SWORD;
     }
 #ifdef KSH
-    else if (cf & LETEXPR)
-    {
-        *wp++ = OQUOTE;     /* enclose arguments in (double) quotes */
+    else if (cf & LETEXPR) {
+        *wp++ = OQUOTE;         /* enclose arguments in (double) quotes */
         state = SLETPAREN;
         statep->ls_sletparen.nparen = 0;
     }
 #endif /* KSH */
-    else
-    {        /* normal lexing */
+    else {        /* normal lexing */
         state = (cf & HEREDELIM) ? SHEREDELIM : SBASE;
-        while ((c = getsc()) == ' ' || c == '\t')
-        {
+        while ((c = getsc()) == ' ' || c == '\t') {
         }
-        if (c == '#')
-        {
+        if (c == '#') {
             ignore_backslash_newline++;
-            while ((c = getsc()) != '\0' && c != '\n')
-            {
+            while ((c = getsc()) != '\0' && c != '\n') {
             }
             ignore_backslash_newline--;
         }
         ungetsc(c);
     }
-    if (source->flags & SF_ALIAS)
-    {    /* trailing ' ' in alias definition */
+    if (source->flags & SF_ALIAS) {     /* trailing ' ' in alias definition */
         source->flags &= ~SF_ALIAS;
         /* In POSIX mode, a trailing space only counts if we are
          * parsing a simple command
          */
-        if (!Flag(FPOSIX) || (cf & CMDWORD))
-        {
+        if (!Flag(FPOSIX) || (cf & CMDWORD)) {
             cf |= ALIAS;
         }
     }
@@ -182,35 +175,27 @@ int yylex (int cf)
             (c = getsc()) == 0 || (
                     (state == SBASE || state == SHEREDELIM) && ctype(c, C_LEX1)
             )
-    ))
-    {
+    )) {
         Xcheck(ws, wp);
-        switch (state)
-        {
+        switch (state) {
             case SBASE:
-                if (c == '[' && (cf & (VARASN | ARRAYVAR)))
-                {
+                if (c == '[' && (cf & (VARASN | ARRAYVAR))) {
                     *wp = EOS; /* temporary */
-                    if (is_wdvarname(Xstring(ws, wp), false))
-                    {
-                        char* p, * tmp;
+                    if (is_wdvarname(Xstring(ws, wp), false)) {
+                        char *p, *tmp;
 
-                        if (arraysub(&tmp))
-                        {
+                        if (arraysub(&tmp)) {
                             *wp++ = CHAR;
                             *wp++ = (char) c;
-                            for (p = tmp; *p;)
-                            {
+                            for (p = tmp; *p;) {
                                 Xcheck(ws, wp);
                                 *wp++ = CHAR;
                                 *wp++ = *p++;
                             }
                             afree(tmp, ATEMP);
                             break;
-                        }
-                        else
-                        {
-                            Source* s;
+                        } else {
+                            Source *s;
 
                             s = pushs(SREREAD, source->areap);
                             s->start = s->str = s->u.freeme = tmp;
@@ -225,11 +210,9 @@ int yylex (int cf)
                 /* fall through.. */
             Sbase1:    /* includes *(...|...) pattern (*+?@!) */
 #ifdef KSH
-                if (c == '*' || c == '@' || c == '+' || c == '?' || c == '!')
-                {
+                if (c == '*' || c == '@' || c == '+' || c == '?' || c == '!') {
                     c2 = getsc();
-                    if (c2 == '(' /*)*/ )
-                    {
+                    if (c2 == '(' /*)*/ ) {
                         *wp++ = OPAT;
                         *wp++ = (char) c;
                         PUSH_STATE(SPATTERN);
@@ -240,12 +223,10 @@ int yylex (int cf)
 #endif /* KSH */
                 /* fall through.. */
             Sbase2:    /* doesn't include *(...|...) pattern (*+?@!) */
-                switch (c)
-                {
+                switch (c) {
                     case '\\':
                         c = getsc();
-                        if (c)
-                        { /* trailing \ is lost */
+                        if (c) { /* trailing \ is lost */
                             *wp++ = QCHAR, *wp++ = (char) c;
                         }
                         break;
@@ -264,31 +245,27 @@ int yylex (int cf)
                 break;
 
             Subst:
-                switch (c)
-                {
-                    Lex_state* s;
-                    Lex_state* base;
+                switch (c) {
+                    Lex_state *s;
+                    Lex_state *base;
 
                     case '\\':
                         c = getsc();
-                        switch (c)
-                        {
+                        switch (c) {
                             case '\\':
                             case '$':
                             case '`':
                                 *wp++ = QCHAR, *wp++ = (char) c;
                                 break;
                             case '"':
-                                if ((cf & HEREDOC) == 0)
-                                {
+                                if ((cf & HEREDOC) == 0) {
                                     *wp++ = QCHAR, *wp++ = (char) c;
                                     break;
                                 }
                                 /* FALLTHROUGH */
                             default:
                                 Xcheck(ws, wp);
-                                if (c)
-                                { /* trailing \ is lost */
+                                if (c) { /* trailing \ is lost */
                                     *wp++ = CHAR, *wp++ = '\\';
                                     *wp++ = CHAR, *wp++ = (char) c;
                                 }
@@ -304,47 +281,37 @@ int yylex (int cf)
                                 statep->ls_sasparen.nparen = 2;
                                 statep->ls_sasparen.start = Xsavepos(ws, wp);
                                 *wp++ = EXPRSUB;
-                            }
-                            else
-                            {
+                            } else {
                                 ungetsc(c);
                                 PUSH_STATE(SCSPAREN);
                                 statep->ls_scsparen.nparen = 1;
                                 statep->ls_scsparen.csstate = 0;
                                 *wp++ = COMSUB;
                             }
-                        }
-                        else if (c == '{') /*}*/ {
+                        } else if (c == '{') /*}*/ {
                             *wp++ = OSUBST;
                             *wp++ = '{'; /*}*/
                             wp = get_brace_var(&ws, wp);
                             c = getsc();
                             /* allow :# and :% (ksh88 compat) */
-                            if (c == ':')
-                            {
+                            if (c == ':') {
                                 *wp++ = CHAR, *wp++ = (char) c;
                                 c = getsc();
                             }
                             /* If this is a trim operation,
                              * treat (,|,) specially in STBRACE.
                              */
-                            if (c == '#' || c == '%')
-                            {
+                            if (c == '#' || c == '%') {
                                 ungetsc(c);
                                 PUSH_STATE(STBRACE);
-                            }
-                            else
-                            {
+                            } else {
                                 ungetsc(c);
                                 PUSH_STATE(SBRACE);
                             }
-                        }
-                        else if (ctype(c, C_ALPHA))
-                        {
+                        } else if (ctype(c, C_ALPHA)) {
                             *wp++ = OSUBST;
                             *wp++ = 'X';
-                            do
-                            {
+                            do {
                                 Xcheck(ws, wp);
                                 *wp++ = (char) c;
                                 c = getsc();
@@ -353,9 +320,7 @@ int yylex (int cf)
                             *wp++ = CSUBST;
                             *wp++ = 'X';
                             ungetsc(c);
-                        }
-                        else if (ctype(c, C_DIGIT | C_VAR1))
-                        {
+                        } else if (ctype(c, C_DIGIT | C_VAR1)) {
                             Xcheck(ws, wp);
                             *wp++ = OSUBST;
                             *wp++ = 'X';
@@ -363,9 +328,7 @@ int yylex (int cf)
                             *wp++ = '\0';
                             *wp++ = CSUBST;
                             *wp++ = 'X';
-                        }
-                        else
-                        {
+                        } else {
                             *wp++ = CHAR, *wp++ = '$';
                             ungetsc(c);
                         }
@@ -384,22 +347,17 @@ int yylex (int cf)
                         statep->ls_sbquote.indquotes = 0;
                         s = statep;
                         base = state_info.base;
-                        while (1)
-                        {
-                            for (; s != base; s--)
-                            {
-                                if (s->ls_state == SDQUOTE)
-                                {
+                        while (1) {
+                            for (; s != base; s--) {
+                                if (s->ls_state == SDQUOTE) {
                                     statep->ls_sbquote.indquotes = 1;
                                     break;
                                 }
                             }
-                            if (s != base)
-                            {
+                            if (s != base) {
                                 break;
                             }
-                            if (!(s = s->ls_info.base))
-                            {
+                            if (!(s = s->ls_info.base)) {
                                 break;
                             }
                             base = s-- - STATE_BSIZE;
@@ -411,26 +369,20 @@ int yylex (int cf)
                 break;
 
             case SSQUOTE:
-                if (c == '\'')
-                {
+                if (c == '\'') {
                     POP_STATE();
                     *wp++ = CQUOTE;
                     ignore_backslash_newline--;
-                }
-                else
-                {
+                } else {
                     *wp++ = QCHAR, *wp++ = (char) c;
                 }
                 break;
 
             case SDQUOTE:
-                if (c == '"')
-                {
+                if (c == '"') {
                     POP_STATE();
                     *wp++ = CQUOTE;
-                }
-                else
-                {
+                } else {
                     goto Subst;
                 }
                 break;
@@ -441,11 +393,9 @@ int yylex (int cf)
                  * really work because nested $(..) or ${..} inside
                  * double quotes aren't dealt with.
                  */
-                switch (statep->ls_scsparen.csstate)
-                {
+                switch (statep->ls_scsparen.csstate) {
                     case 0: /* normal */
-                        switch (c)
-                        {
+                        switch (c) {
                             case '(':
                                 statep->ls_scsparen.nparen++;
                                 break;
@@ -473,31 +423,24 @@ int yylex (int cf)
                         break;
 
                     case 2: /* double quotes */
-                        if (c == '"')
-                        {
+                        if (c == '"') {
                             statep->ls_scsparen.csstate = 0;
-                        }
-                        else if (c == '\\')
-                        {
+                        } else if (c == '\\') {
                             statep->ls_scsparen.csstate = 3;
                         }
                         break;
 
                     case 4: /* single quotes */
-                        if (c == '\'')
-                        {
+                        if (c == '\'') {
                             statep->ls_scsparen.csstate = 0;
                             ignore_backslash_newline--;
                         }
                         break;
                 }
-                if (statep->ls_scsparen.nparen == 0)
-                {
+                if (statep->ls_scsparen.nparen == 0) {
                     POP_STATE();
                     *wp++ = 0; /* end of COMSUB */
-                }
-                else
-                {
+                } else {
                     *wp++ = (char) c;
                 }
                 break;
@@ -506,25 +449,18 @@ int yylex (int cf)
                 /* todo: deal with $((...); (...)) properly */
                 /* XXX should nest using existing state machine
                  *     (embed "..", $(...), etc.) */
-                if (c == '(')
-                {
+                if (c == '(') {
                     statep->ls_sasparen.nparen++;
-                }
-                else if (c == ')')
-                {
+                } else if (c == ')') {
                     statep->ls_sasparen.nparen--;
-                    if (statep->ls_sasparen.nparen == 1)
-                    {
+                    if (statep->ls_sasparen.nparen == 1) {
                         /*(*/
-                        if ((c2 = getsc()) == ')')
-                        {
+                        if ((c2 = getsc()) == ')') {
                             POP_STATE();
                             *wp++ = 0; /* end of EXPRSUB */
                             break;
-                        }
-                        else
-                        {
-                            char* s;
+                        } else {
+                            char *s;
 
                             ungetsc(c2);
                             /* mismatched parenthesis -
@@ -548,14 +484,11 @@ int yylex (int cf)
 
             case SBRACE:
                 /*{*/
-                if (c == '}')
-                {
+                if (c == '}') {
                     POP_STATE();
                     *wp++ = CSUBST;
                     *wp++ = /*{*/ '}';
-                }
-                else
-                {
+                } else {
                     goto Sbase1;
                 }
                 break;
@@ -563,61 +496,46 @@ int yylex (int cf)
             case STBRACE:
                 /* Same as SBRACE, except (,|,) treated specially */
                 /*{*/
-                if (c == '}')
-                {
+                if (c == '}') {
                     POP_STATE();
                     *wp++ = CSUBST;
                     *wp++ = /*{*/ '}';
-                }
-                else if (c == '|')
-                {
+                } else if (c == '|') {
                     *wp++ = SPAT;
-                }
-                else if (c == '(')
-                {
+                } else if (c == '(') {
                     *wp++ = OPAT;
                     *wp++ = ' ';    /* simile for @ */
                     PUSH_STATE(SPATTERN);
-                }
-                else
-                {
+                } else {
                     goto Sbase1;
                 }
                 break;
 
             case SBQUOTE:
-                if (c == '`')
-                {
+                if (c == '`') {
                     *wp++ = 0;
                     POP_STATE();
-                }
-                else if (c == '\\')
-                {
-                    switch (c = getsc())
-                    {
+                } else if (c == '\\') {
+                    switch (c = getsc()) {
                         case '\\':
                         case '$':
                         case '`':
                             *wp++ = (char) c;
                             break;
                         case '"':
-                            if (statep->ls_sbquote.indquotes)
-                            {
+                            if (statep->ls_sbquote.indquotes) {
                                 *wp++ = (char) c;
                                 break;
                             }
                             /* fall through.. */
                         default:
-                            if (c)
-                            { /* trailing \ is lost */
+                            if (c) { /* trailing \ is lost */
                                 *wp++ = '\\';
                                 *wp++ = (char) c;
                             }
                             break;
                     }
-                }
-                else
-                {
+                } else {
                     *wp++ = (char) c;
                 }
                 break;
@@ -628,26 +546,18 @@ int yylex (int cf)
 #ifdef KSH
             case SLETPAREN:    /* LETEXPR: (( ... )) */
                 /*(*/
-                if (c == ')')
-                {
-                    if (statep->ls_sletparen.nparen > 0)
-                    {
+                if (c == ')') {
+                    if (statep->ls_sletparen.nparen > 0) {
                         --statep->ls_sletparen.nparen;
                         /*(*/
-                    }
-                    else if ((c2 = getsc()) == ')')
-                    {
+                    } else if ((c2 = getsc()) == ')') {
                         c = 0;
                         *wp++ = CQUOTE;
                         goto Done;
-                    }
-                    else
-                    {
+                    } else {
                         ungetsc(c2);
                     }
-                }
-                else if (c == '(')
-                {
+                } else if (c == '(') {
                     /* parenthesis inside quotes and backslashes
                      * are lost, but at&t ksh doesn't count them
                      * either
@@ -666,53 +576,39 @@ int yylex (int cf)
                 /* here delimiters need a special case since
                  * $ and `..` are not to be treated specially
                  */
-                if (c == '\\')
-                {
+                if (c == '\\') {
                     c = getsc();
-                    if (c)
-                    { /* trailing \ is lost */
+                    if (c) { /* trailing \ is lost */
                         *wp++ = QCHAR;
                         *wp++ = (char) c;
                     }
-                }
-                else if (c == '\'')
-                {
+                } else if (c == '\'') {
                     PUSH_STATE(SSQUOTE);
                     *wp++ = OQUOTE;
                     ignore_backslash_newline++;
-                }
-                else if (c == '"')
-                {
+                } else if (c == '"') {
                     state = statep->ls_state = SHEREDQUOTE;
                     *wp++ = OQUOTE;
-                }
-                else
-                {
+                } else {
                     *wp++ = CHAR;
                     *wp++ = (char) c;
                 }
                 break;
 
             case SHEREDQUOTE:    /* " in <<,<<- delimiter */
-                if (c == '"')
-                {
+                if (c == '"') {
                     *wp++ = CQUOTE;
                     state = statep->ls_state = SHEREDELIM;
-                }
-                else
-                {
-                    if (c == '\\')
-                    {
-                        switch (c = getsc())
-                        {
+                } else {
+                    if (c == '\\') {
+                        switch (c = getsc()) {
                             case '\\':
                             case '"':
                             case '$':
                             case '`':
                                 break;
                             default:
-                                if (c)
-                                { /* trailing \ lost */
+                                if (c) { /* trailing \ lost */
                                     *wp++ = CHAR;
                                     *wp++ = '\\';
                                 }
@@ -725,23 +621,16 @@ int yylex (int cf)
                 break;
 
             case SPATTERN:    /* in *(...|...) pattern (*+?@!) */
-                if ( /*(*/ c == ')')
-                {
+                if ( /*(*/ c == ')') {
                     *wp++ = CPAT;
                     POP_STATE();
-                }
-                else if (c == '|')
-                {
+                } else if (c == '|') {
                     *wp++ = SPAT;
-                }
-                else if (c == '(')
-                {
+                } else if (c == '(') {
                     *wp++ = OPAT;
                     *wp++ = ' ';    /* simile for @ */
                     PUSH_STATE(SPATTERN);
-                }
-                else
-                {
+                } else {
                     goto Sbase1;
                 }
                 break;
@@ -751,55 +640,42 @@ int yylex (int cf)
     }
     Done:
     Xcheck(ws, wp);
-    if (statep != &states[1])
-    {
+    if (statep != &states[1]) {
         /* XXX figure out what is missing */
         yyerror("no closing quote\n");
     }
 
     /* This done to avoid tests for SHEREDELIM wherever SBASE tested */
-    if (state == SHEREDELIM)
-    {
+    if (state == SHEREDELIM) {
         state = SBASE;
     }
 
     dp = Xstring(ws, wp);
     if ((c == '<' || c == '>') && state == SBASE && (
             (c2 = Xlength(ws, wp)) == 0 || (c2 == 2 && dp[0] == CHAR && digit(dp[1]))
-    ))
-    {
-        struct ioword* iop = (struct ioword*) alloc(sizeof(*iop), ATEMP);
+    )) {
+        struct ioword *iop = (struct ioword *) alloc(sizeof(*iop), ATEMP);
 
-        if (c2 == 2)
-        {
+        if (c2 == 2) {
             iop->unit = dp[1] - '0';
-        }
-        else
-        {
+        } else {
             iop->unit = c == '>';
         } /* 0 for <, 1 for > */
 
         c2 = getsc();
         /* <<, >>, <> are ok, >< is not */
-        if (c == c2 || (c == '<' && c2 == '>'))
-        {
+        if (c == c2 || (c == '<' && c2 == '>')) {
             iop->flag = c == c2 ? (c == '>' ? IOCAT : IOHERE) : IORDWR;
-            if (iop->flag == IOHERE)
-            {
-                if ((c2 = getsc()) == '-')
-                {
+            if (iop->flag == IOHERE) {
+                if ((c2 = getsc()) == '-') {
                     iop->flag |= IOSKIP;
-                }
-                else
-                {
+                } else {
                     ungetsc(c2);
                 }
             }
-        }
-        else if (c2 == '&')
+        } else if (c2 == '&')
             iop->flag = IODUP | (c == '<' ? IORDUP : 0);
-        else
-        {
+        else {
             iop->flag = c == '>' ? IOWRITE : IOREAD;
             if (c == '>' && c2 == '|')
                 iop->flag |= IOCLOB;
@@ -807,59 +683,50 @@ int yylex (int cf)
                 ungetsc(c2);
         }
 
-        iop->name = (char*) 0;
-        iop->delim = (char*) 0;
-        iop->heredoc = (char*) 0;
+        iop->name = (char *) 0;
+        iop->delim = (char *) 0;
+        iop->heredoc = (char *) 0;
         Xfree(ws, wp);    /* free word */
         yylval.iop = iop;
         return REDIR;
     }
 
-    if (wp == dp && state == SBASE)
-    {
+    if (wp == dp && state == SBASE) {
         Xfree(ws, wp);    /* free word */
         /* no word, process LEX1 character */
-        switch (c)
-        {
+        switch (c) {
             default:
                 return c;
 
             case '|':
             case '&':
             case ';':
-                if ((c2 = getsc()) == c)
-                {
+                if ((c2 = getsc()) == c) {
                     c = (c == ';') ? BREAK : (c == '|') ? LOGOR : (c == '&') ? LOGAND : YYERRCODE;
                 }
 #ifdef KSH
-                else if (c == '|' && c2 == '&')
-                {
+                else if (c == '|' && c2 == '&') {
                     c = COPROC;
                 }
 #endif /* KSH */
-                else
-                {
+                else {
                     ungetsc(c2);
                 }
                 return c;
 
             case '\n':
                 gethere();
-                if (cf & CONTIN)
-                {
+                if (cf & CONTIN) {
                     goto Again;
                 }
                 return c;
 
             case '(':  /*)*/
 #ifdef KSH
-                if ((c2 = getsc()) == '(')
-                { /*)*/
+                if ((c2 = getsc()) == '(') { /*)*/
                     /* XXX need to handle ((...); (...)) */
                     c = MDPAREN;
-                }
-                else
-                {
+                } else {
                     ungetsc(c2);
                 }
 #endif /* KSH */
@@ -876,39 +743,33 @@ int yylex (int cf)
         #ifdef KSH
         || state == SLETPAREN
 #endif /* KSH */
-            )
-    {    /* ONEWORD? */
+            ) {    /* ONEWORD? */
         return LWORD;
     }
     ungetsc(c);        /* unget terminator */
 
     /* copy word to unprefixed string ident */
-    for (sp = yylval.cp, dp = ident; dp < ident + IDENT && (c = (unsigned char) *sp++) == CHAR;)
-    {
+    for (sp = yylval.cp, dp = ident; dp < ident + IDENT && (c = (unsigned char) *sp++) == CHAR;) {
         *dp++ = *sp++;
     }
     /* Make sure the ident array stays '\0' padded */
     memset(dp, 0, (ident + IDENT) - dp + 1);
-    if (c != EOS)
-    {
+    if (c != EOS) {
         *ident = '\0';
     }    /* word is not unquoted */
 
-    if (*ident != '\0' && (cf & (KEYWORD | ALIAS)))
-    {
-        struct tbl* p;
+    if (*ident != '\0' && (cf & (KEYWORD | ALIAS))) {
+        struct tbl *p;
         unsigned int h = hash(ident);
 
         /* { */
         if ((cf & KEYWORD) && (p = mytsearch(&keywords, ident, h)) &&
-            (!(cf & ESACONLY) || p->val.i == ESAC || p->val.i == '}'))
-        {
+            (!(cf & ESACONLY) || p->val.i == ESAC || p->val.i == '}')) {
             afree(yylval.cp, ATEMP);
             return (unsigned char) p->val.i;
         }
-        if ((cf & ALIAS) && (p = mytsearch(&aliases, ident, h)) && (p->flag & ISSET))
-        {
-            Source* s;
+        if ((cf & ALIAS) && (p = mytsearch(&aliases, ident, h)) && (p->flag & ISSET)) {
+            Source *s;
 
             for (s = source; s->type == SALIAS; s = s->next)
                 if (s->u.tblp == p)
@@ -927,12 +788,10 @@ int yylex (int cf)
     return LWORD;
 }
 
-static void gethere (void)
-{
-    struct ioword** p;
+static void gethere(void) {
+    struct ioword **p;
 
-    for (p = heres; p < herep; p++)
-    {
+    for (p = heres; p < herep; p++) {
         readhere(*p);
     }
     herep = heres;
@@ -942,42 +801,35 @@ static void gethere (void)
  * read "<<word" text into temp file
  */
 
-static void readhere (struct ioword* iop)
-{
+static void readhere(struct ioword *iop) {
     int c;
-    char* volatile eof;
-    char* eofp;
+    char *volatile eof;
+    char *eofp;
     int skiptabs;
     XString xs;
-    char* xp;
+    char *xp;
     int xpos;
 
     eof = evalstr(iop->delim, 0);
 
-    if (!(iop->flag & IOEVAL))
-    {
+    if (!(iop->flag & IOEVAL)) {
         ignore_backslash_newline++;
     }
 
     Xinit(xs, xp, 256, ATEMP);
 
-    for (;;)
-    {
+    for (;;) {
         eofp = eof;
         skiptabs = iop->flag & IOSKIP;
         xpos = Xsavepos(xs, xp);
-        while ((c = getsc()) != 0)
-        {
-            if (skiptabs)
-            {
-                if (c == '\t')
-                {
+        while ((c = getsc()) != 0) {
+            if (skiptabs) {
+                if (c == '\t') {
                     continue;
                 }
                 skiptabs = 0;
             }
-            if (c != *eofp)
-            {
+            if (c != *eofp) {
                 break;
             }
             Xcheck(xs, xp);
@@ -987,16 +839,13 @@ static void readhere (struct ioword* iop)
         /* Allow EOF here so commands with out trailing newlines
          * will work (eg, ksh -c '...', $(...), etc).
          */
-        if (*eofp == '\0' && (c == 0 || c == '\n'))
-        {
+        if (*eofp == '\0' && (c == 0 || c == '\n')) {
             xp = Xrestpos(xs, xp, xpos);
             break;
         }
         ungetsc(c);
-        while ((c = getsc()) != '\n')
-        {
-            if (c == 0)
-            {
+        while ((c = getsc()) != '\n') {
+            if (c == 0) {
                 yyerror("here document `%s' unclosed\n", eof);
             }
             Xcheck(xs, xp);
@@ -1008,19 +857,16 @@ static void readhere (struct ioword* iop)
     Xput(xs, xp, '\0');
     iop->heredoc = Xclose(xs, xp);
 
-    if (!(iop->flag & IOEVAL))
-    {
+    if (!(iop->flag & IOEVAL)) {
         ignore_backslash_newline--;
     }
 }
 
-void yyerror (const char* fmt, ...)
-{
+void yyerror(const char *fmt, ...) {
     va_list va;
 
     /* pop aliases and re-reads */
-    while (source->type == SALIAS || source->type == SREREAD)
-    {
+    while (source->type == SALIAS || source->type == SREREAD) {
         source = source->next;
     }
     source->str = null;    /* zap pending input */
@@ -1036,11 +882,10 @@ void yyerror (const char* fmt, ...)
  * input for yylex with alias expansion
  */
 
-Source* pushs (int type, Area* areap)
-{
-    Source* s;
+Source *pushs(int type, Area *areap) {
+    Source *s;
 
-    s = (Source*) alloc(sizeof(Source), areap);
+    s = (Source *) alloc(sizeof(Source), areap);
     s->type = type;
     s->str = null;
     s->start = NULL;
@@ -1050,29 +895,23 @@ Source* pushs (int type, Area* areap)
     s->flags = 0;
     s->next = NULL;
     s->areap = areap;
-    if (type == SFILE || type == SSTDIN)
-    {
-        char* dummy;
+    if (type == SFILE || type == SSTDIN) {
+        char *dummy;
         Xinit(s->xs, dummy, 256, s->areap);
         (void) dummy; /* fixme: unused var */
-    }
-    else
-    {
+    } else {
         memset(&s->xs, 0, sizeof(s->xs));
     }
     return s;
 }
 
-static int getsc__ (void)
-{
-    Source* s = source;
+static int getsc__(void) {
+    Source *s = source;
     int c;
 
-    while ((c = (int) *s->str++) == 0)
-    {
+    while ((c = (int) *s->str++) == 0) {
         s->str = NULL;        /* return 0 for EOF by default */
-        switch (s->type)
-        {
+        switch (s->type) {
             case SEOF:
                 s->str = null;
                 return 0;
@@ -1092,38 +931,30 @@ static int getsc__ (void)
                 break;
 
             case SWORDSEP:
-                if (*s->u.strv == NULL)
-                {
+                if (*s->u.strv == NULL) {
                     s->start = s->str = newline;
                     s->type = SEOF;
-                }
-                else
-                {
+                } else {
                     s->start = s->str = space;
                     s->type = SWORDS;
                 }
                 break;
 
             case SALIAS:
-                if (s->flags & SF_ALIASEND)
-                {
+                if (s->flags & SF_ALIASEND) {
                     /* pass on an unused SF_ALIAS flag */
                     source = s->next;
                     source->flags |= s->flags & SF_ALIAS;
                     s = source;
-                }
-                else if (*s->u.tblp->val.s &&
-                         isspace((unsigned char) strchr(s->u.tblp->val.s, 0)[-1]))
-                {
+                } else if (*s->u.tblp->val.s &&
+                           isspace((unsigned char) strchr(s->u.tblp->val.s, 0)[-1])) {
                     source = s = s->next;    /* pop source stack */
                     /* Note that this alias ended with a space,
                      * enabling alias expansion on the following
                      * word.
                      */
                     s->flags |= SF_ALIAS;
-                }
-                else
-                {
+                } else {
                     /* At this point, we need to keep the current
                      * alias in the source list so recursive
                      * aliases can be detected and we also need
@@ -1136,17 +967,14 @@ static int getsc__ (void)
                     source = s->next;    /* pop source stack */
                     source->flags |= s->flags & SF_ALIAS;
                     c = getsc__();
-                    if (c)
-                    {
+                    if (c) {
                         s->flags |= SF_ALIASEND;
                         s->ugbuf[0] = (char) c;
                         s->ugbuf[1] = '\0';
                         s->start = s->str = s->ugbuf;
                         s->next = source;
                         source = s;
-                    }
-                    else
-                    {
+                    } else {
                         s = source;
                         /* avoid reading eof twice */
                         s->str = NULL;
@@ -1156,21 +984,18 @@ static int getsc__ (void)
                 continue;
 
             case SREREAD:
-                if (s->start != s->ugbuf)
-                { /* yuck */
+                if (s->start != s->ugbuf) { /* yuck */
                     afree(s->u.freeme, ATEMP);
                 }
                 source = s = s->next;
                 continue;
         }
-        if (s->str == NULL)
-        {
+        if (s->str == NULL) {
             s->type = SEOF;
             s->start = s->str = null;
             return '\0';
         }
-        if (s->flags & SF_ECHO)
-        {
+        if (s->flags & SF_ECHO) {
             shf_puts(s->str, shl_out);
             shf_flush(shl_out);
         }
@@ -1178,9 +1003,8 @@ static int getsc__ (void)
     return c;
 }
 
-static void getsc_line (Source* s)
-{
-    char* xp = Xstring(s->xs, xp);
+static void getsc_line(Source *s) {
+    char *xp = Xstring(s->xs, xp);
     int interactive = Flag(FTALKING) && s->type == SSTDIN;
     int have_tty = interactive && (s->flags & SF_TTY);
 
@@ -1190,37 +1014,29 @@ static void getsc_line (Source* s)
     s->start = s->str = xp;
 
 #ifdef KSH
-    if (have_tty && ksh_tmout)
-    {
+    if (have_tty && ksh_tmout) {
         ksh_tmout_state = TMOUT_READING;
         alarm(ksh_tmout);
     }
 #endif /* KSH */
     {
-        if (interactive)
-        {
+        if (interactive) {
             pprompt(prompt, 0);
-        }
-        else
-        {
+        } else {
             s->line++;
         }
 
-        while (1)
-        {
-            char* p = shf_getse(xp, Xnleft(s->xs, xp), s->u.shf);
+        while (1) {
+            char *p = shf_getse(xp, Xnleft(s->xs, xp), s->u.shf);
 
-            if (!p && shf_error(s->u.shf) && shf_errno(s->u.shf) == EINTR)
-            {
+            if (!p && shf_error(s->u.shf) && shf_errno(s->u.shf) == EINTR) {
                 shf_clearerr(s->u.shf);
-                if (trap)
-                {
+                if (trap) {
                     runtraps(0);
                 }
                 continue;
             }
-            if (!p || (xp = p, xp[-1] == '\n'))
-            {
+            if (!p || (xp = p, xp[-1] == '\n')) {
                 break;
             }
             /* double buffer size */
@@ -1234,8 +1050,7 @@ static void getsc_line (Source* s)
          * etc..
          * todo: reduce size of shf buffer (~128?) if SSTDIN
          */
-        if (s->type == SSTDIN)
-        {
+        if (s->type == SSTDIN) {
             shf_flush(s->u.shf);
         }
     }
@@ -1244,8 +1059,7 @@ static void getsc_line (Source* s)
      */
     source = s;
 #ifdef KSH
-    if (have_tty && ksh_tmout)
-    {
+    if (have_tty && ksh_tmout) {
         ksh_tmout_state = TMOUT_EXECUTING;
         alarm(0);
     }
@@ -1253,33 +1067,24 @@ static void getsc_line (Source* s)
     s->start = s->str = Xstring(s->xs, xp);
     strip_nuls(Xstring(s->xs, xp), Xlength(s->xs, xp));
     /* Note: if input is all nulls, this is not eof */
-    if (Xlength(s->xs, xp) == 0)
-    { /* EOF */
-        if (s->type == SFILE)
-        {
+    if (Xlength(s->xs, xp) == 0) { /* EOF */
+        if (s->type == SFILE) {
             shf_fdclose(s->u.shf);
         }
         s->str = NULL;
-    }
-    else if (interactive)
-    {
+    } else if (interactive) {
 #ifdef HISTORY
-        char* p = Xstring(s->xs, xp);
-        if (cur_prompt == PS1)
-        {
-            while (*p && ctype(*p, C_IFS) && ctype(*p, C_IFSWS))
-            {
+        char *p = Xstring(s->xs, xp);
+        if (cur_prompt == PS1) {
+            while (*p && ctype(*p, C_IFS) && ctype(*p, C_IFSWS)) {
                 p++;
             }
         }
-        if (*p)
-        {
+        if (*p) {
 # ifdef EASY_HISTORY
-            if (cur_prompt == PS2)
-            {
+            if (cur_prompt == PS2) {
                 histappend(Xstring(s->xs, xp), 1);
-            }
-            else
+            } else
 # endif /* EASY_HISTORY */
             {
                 s->line++;
@@ -1288,18 +1093,15 @@ static void getsc_line (Source* s)
         }
 #endif /* HISTORY */
     }
-    if (interactive)
-    {
-        set_prompt(PS2, (Source*) 0);
+    if (interactive) {
+        set_prompt(PS2, (Source *) 0);
     }
 }
 
-void set_prompt (int to, Source* s)
-{
+void set_prompt(int to, Source *s) {
     cur_prompt = to;
 
-    switch (to)
-    {
+    switch (to) {
         case PS1: /* command */
 #ifdef KSH
             /* Substitute ! and !! here, before substitutions are done
@@ -1308,28 +1110,23 @@ void set_prompt (int to, Source* s)
              * substitutions, POSIX doesn't say which is to be done.
              */
         {
-            struct shf* shf;
-            char* volatile ps1;
-            Area* saved_atemp;
+            struct shf *shf;
+            char *volatile ps1;
+            Area *saved_atemp;
 
             ps1 = str_val(global("PS1"));
-            shf = shf_sopen((char*) 0, (int) strlen(ps1) * 2, SHF_WR | SHF_DYNAMIC, (struct shf*) 0);
-            while (*ps1)
-            {
-                if (*ps1 != '!' || *++ps1 == '!')
-                {
+            shf = shf_sopen((char *) 0, (int) strlen(ps1) * 2, SHF_WR | SHF_DYNAMIC, (struct shf *) 0);
+            while (*ps1) {
+                if (*ps1 != '!' || *++ps1 == '!') {
                     shf_putchar(*ps1++, shf);
-                }
-                else
-                {
+                } else {
                     shf_fprintf(shf, "%d", s ? s->line + 1 : 0);
                 }
             }
             ps1 = shf_sclose(shf);
             saved_atemp = ATEMP;
             newenv(E_ERRH);
-            if (ksh_sigsetjmp(e->jbuf, 0))
-            {
+            if (ksh_sigsetjmp(e->jbuf, 0)) {
                 prompt = safe_prompt;
                 /* Don't print an error - assume it has already
                  * been printed.  Reason is we may have forked
@@ -1337,9 +1134,7 @@ void set_prompt (int to, Source* s)
                  * unwinding its stack through this code as it
                  * exits.
                  */
-            }
-            else
-            {
+            } else {
                 prompt = str_save(substitute(ps1, 0), saved_atemp);
             }
             quitenv();
@@ -1358,8 +1153,7 @@ void set_prompt (int to, Source* s)
 }
 
 /* See also related routine, promptlen() in edit.c */
-void pprompt (const char* cp, int ntruncate)
-{
+void pprompt(const char *cp, int ntruncate) {
 #if 0
     char nbuf[32];
     int c;
@@ -1401,10 +1195,8 @@ void pprompt (const char* cp, int ntruncate)
 /* Read the variable part of a ${...} expression (ie, up to but not including
  * the :[-+?=#%] or close-brace.
  */
-static char* get_brace_var (XString* wsp, char* wp)
-{
-    enum parse_state
-    {
+static char *get_brace_var(XString *wsp, char *wp) {
+    enum parse_state {
         PS_INITIAL,
         PS_SAW_HASH,
         PS_IDENT,
@@ -1415,52 +1207,38 @@ static char* get_brace_var (XString* wsp, char* wp)
     char c;
 
     state = PS_INITIAL;
-    while (1)
-    {
+    while (1) {
         c = getsc();
         /* State machine to figure out where the variable part ends. */
-        switch (state)
-        {
+        switch (state) {
             case PS_INITIAL:
-                if (c == '#')
-                {
+                if (c == '#') {
                     state = PS_SAW_HASH;
                     break;
                 }
                 /* fall through.. */
             case PS_SAW_HASH:
-                if (letter(c))
-                {
+                if (letter(c)) {
                     state = PS_IDENT;
-                }
-                else if (digit(c))
-                {
+                } else if (digit(c)) {
                     state = PS_NUMBER;
-                }
-                else if (ctype(c, C_VAR1))
-                {
+                } else if (ctype(c, C_VAR1)) {
                     state = PS_VAR1;
-                }
-                else
-                {
+                } else {
                     state = PS_END;
                 }
                 break;
             case PS_IDENT:
-                if (!letnum(c))
-                {
+                if (!letnum(c)) {
                     state = PS_END;
-                    if (c == '[')
-                    {
-                        char* tmp, * p;
+                    if (c == '[') {
+                        char *tmp, *p;
 
-                        if (!arraysub(&tmp))
-                        {
+                        if (!arraysub(&tmp)) {
                             yyerror("missing ]\n");
                         }
                         *wp++ = c;
-                        for (p = tmp; *p;)
-                        {
+                        for (p = tmp; *p;) {
                             Xcheck(*wsp, wp);
                             *wp++ = *p++;
                         }
@@ -1470,8 +1248,7 @@ static char* get_brace_var (XString* wsp, char* wp)
                 }
                 break;
             case PS_NUMBER:
-                if (!digit(c))
-                {
+                if (!digit(c)) {
                     state = PS_END;
                 }
                 break;
@@ -1481,8 +1258,7 @@ static char* get_brace_var (XString* wsp, char* wp)
             case PS_END: /* keep gcc happy */
                 break;
         }
-        if (state == PS_END)
-        {
+        if (state == PS_END) {
             *wp++ = '\0';    /* end of variable part */
             ungetsc(c);
             break;
@@ -1498,26 +1274,21 @@ static char* get_brace_var (XString* wsp, char* wp)
  * if eof or newline was found.
  * (Returned string double null terminated)
  */
-static int arraysub (char** strp)
-{
+static int arraysub(char **strp) {
     XString ws;
-    char* wp;
+    char *wp;
     char c;
     int depth = 1;    /* we are just past the initial [ */
 
     Xinit(ws, wp, 32, ATEMP);
 
-    do
-    {
+    do {
         c = getsc();
         Xcheck(ws, wp);
         *wp++ = c;
-        if (c == '[')
-        {
+        if (c == '[') {
             depth++;
-        }
-        else if (c == ']')
-        {
+        } else if (c == ']') {
             depth--;
         }
     } while (depth > 0 && c && c != '\n');
@@ -1529,24 +1300,18 @@ static int arraysub (char** strp)
 }
 
 /* Unget a char: handles case when we are already at the start of the buffer */
-static const char* ungetsc (int c)
-{
-    if (backslash_skip)
-    {
+static const char *ungetsc(int c) {
+    if (backslash_skip) {
         backslash_skip--;
     }
     /* Don't unget eof... */
-    if (source->str == null && c == '\0')
-    {
+    if (source->str == null && c == '\0') {
         return source->str;
     }
-    if (source->str > source->start)
-    {
+    if (source->str > source->start) {
         source->str--;
-    }
-    else
-    {
-        Source* s;
+    } else {
+        Source *s;
 
         s = pushs(SREREAD, source->areap);
         s->ugbuf[0] = (char) c;
@@ -1560,30 +1325,24 @@ static const char* ungetsc (int c)
 
 
 /* Called to get a char that isn't a \newline sequence. */
-static int getsc_bn (void)
-{
+static int getsc_bn(void) {
     int c, c2;
 
-    if (ignore_backslash_newline)
-    {
+    if (ignore_backslash_newline) {
         return getsc_();
     }
 
-    if (backslash_skip == 1)
-    {
+    if (backslash_skip == 1) {
         backslash_skip = 2;
         return getsc_();
     }
 
     backslash_skip = 0;
 
-    while (1)
-    {
+    while (1) {
         c = getsc_();
-        if (c == '\\')
-        {
-            if ((c2 = getsc_()) == '\n')
-            {
+        if (c == '\\') {
+            if ((c2 = getsc_()) == '\n') {
                 /* ignore the \newline; get the next char... */
                 continue;
             }
@@ -1594,9 +1353,8 @@ static int getsc_bn (void)
     }
 }
 
-static Lex_state* push_state_ (State_info* si, Lex_state* old_end)
-{
-    Lex_state* new = alloc(sizeof(Lex_state) * STATE_BSIZE, ATEMP);
+static Lex_state *push_state_(State_info *si, Lex_state *old_end) {
+    Lex_state *new = alloc(sizeof(Lex_state) * STATE_BSIZE, ATEMP);
 
     new[0].ls_info.base = old_end;
     si->base = &new[0];
@@ -1604,9 +1362,8 @@ static Lex_state* push_state_ (State_info* si, Lex_state* old_end)
     return &new[1];
 }
 
-static Lex_state* pop_state_ (State_info* si, Lex_state* old_end)
-{
-    Lex_state* old_base = si->base;
+static Lex_state *pop_state_(State_info *si, Lex_state *old_end) {
+    Lex_state *old_base = si->base;
 
     si->base = old_end->ls_info.base - STATE_BSIZE;
     si->end = old_end->ls_info.base;
