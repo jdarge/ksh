@@ -3,11 +3,16 @@
 /*
  * lexical analysis and source input
  */
-#include <sys/cdefs.h>
 
 #include "sh.h"
 #include <ctype.h>
 
+/* todo:
+ * i'm not a fan of how characters are treated in this file
+ * we use values >255 and shove them into char variables throughout
+ * seems error prone to overflows
+ * 4-26-2024
+ * */
 
 /* Structure to keep track of the lexing state and the various pieces of info
  * needed for each particular state.
@@ -106,7 +111,7 @@ static int ignore_backslash_newline;
  * hence the state stack.
  */
 
-int yylex (cf) int cf;
+int yylex (int cf)
 {
     Lex_state states[STATE_BSIZE], * statep;
     State_info state_info;
@@ -193,7 +198,7 @@ int yylex (cf) int cf;
                         if (arraysub(&tmp))
                         {
                             *wp++ = CHAR;
-                            *wp++ = c;
+                            *wp++ = (char) c;
                             for (p = tmp; *p;)
                             {
                                 Xcheck(ws, wp);
@@ -214,7 +219,7 @@ int yylex (cf) int cf;
                         }
                     }
                     *wp++ = CHAR;
-                    *wp++ = c;
+                    *wp++ = (char) c;
                     break;
                 }
                 /* fall through.. */
@@ -226,7 +231,7 @@ int yylex (cf) int cf;
                     if (c2 == '(' /*)*/ )
                     {
                         *wp++ = OPAT;
-                        *wp++ = c;
+                        *wp++ = (char) c;
                         PUSH_STATE(SPATTERN);
                         break;
                     }
@@ -241,7 +246,7 @@ int yylex (cf) int cf;
                         c = getsc();
                         if (c)
                         { /* trailing \ is lost */
-                            *wp++ = QCHAR, *wp++ = c;
+                            *wp++ = QCHAR, *wp++ = (char) c;
                         }
                         break;
                     case '\'':
@@ -271,12 +276,12 @@ int yylex (cf) int cf;
                             case '\\':
                             case '$':
                             case '`':
-                                *wp++ = QCHAR, *wp++ = c;
+                                *wp++ = QCHAR, *wp++ = (char) c;
                                 break;
                             case '"':
                                 if ((cf & HEREDOC) == 0)
                                 {
-                                    *wp++ = QCHAR, *wp++ = c;
+                                    *wp++ = QCHAR, *wp++ = (char) c;
                                     break;
                                 }
                                 /* FALLTHROUGH */
@@ -285,7 +290,7 @@ int yylex (cf) int cf;
                                 if (c)
                                 { /* trailing \ is lost */
                                     *wp++ = CHAR, *wp++ = '\\';
-                                    *wp++ = CHAR, *wp++ = c;
+                                    *wp++ = CHAR, *wp++ = (char) c;
                                 }
                                 break;
                         }
@@ -317,7 +322,7 @@ int yylex (cf) int cf;
                             /* allow :# and :% (ksh88 compat) */
                             if (c == ':')
                             {
-                                *wp++ = CHAR, *wp++ = c;
+                                *wp++ = CHAR, *wp++ = (char) c;
                                 c = getsc();
                             }
                             /* If this is a trim operation,
@@ -341,7 +346,7 @@ int yylex (cf) int cf;
                             do
                             {
                                 Xcheck(ws, wp);
-                                *wp++ = c;
+                                *wp++ = (char) c;
                                 c = getsc();
                             } while (ctype(c, C_ALPHA | C_DIGIT));
                             *wp++ = '\0';
@@ -354,7 +359,7 @@ int yylex (cf) int cf;
                             Xcheck(ws, wp);
                             *wp++ = OSUBST;
                             *wp++ = 'X';
-                            *wp++ = c;
+                            *wp++ = (char) c;
                             *wp++ = '\0';
                             *wp++ = CSUBST;
                             *wp++ = 'X';
@@ -401,7 +406,7 @@ int yylex (cf) int cf;
                         }
                         break;
                     default:
-                        *wp++ = CHAR, *wp++ = c;
+                        *wp++ = CHAR, *wp++ = (char) c;
                 }
                 break;
 
@@ -414,7 +419,7 @@ int yylex (cf) int cf;
                 }
                 else
                 {
-                    *wp++ = QCHAR, *wp++ = c;
+                    *wp++ = QCHAR, *wp++ = (char) c;
                 }
                 break;
 
@@ -457,6 +462,8 @@ int yylex (cf) int cf;
                                 statep->ls_scsparen.csstate = 4;
                                 ignore_backslash_newline++;
                                 break;
+                            default:
+                                break; // todo: lazy default
                         }
                         break;
 
@@ -491,7 +498,7 @@ int yylex (cf) int cf;
                 }
                 else
                 {
-                    *wp++ = c;
+                    *wp++ = (char) c;
                 }
                 break;
 
@@ -536,7 +543,7 @@ int yylex (cf) int cf;
                         }
                     }
                 }
-                *wp++ = c;
+                *wp++ = (char) c;
                 break;
 
             case SBRACE:
@@ -591,12 +598,12 @@ int yylex (cf) int cf;
                         case '\\':
                         case '$':
                         case '`':
-                            *wp++ = c;
+                            *wp++ = (char) c;
                             break;
                         case '"':
                             if (statep->ls_sbquote.indquotes)
                             {
-                                *wp++ = c;
+                                *wp++ = (char) c;
                                 break;
                             }
                             /* fall through.. */
@@ -604,14 +611,14 @@ int yylex (cf) int cf;
                             if (c)
                             { /* trailing \ is lost */
                                 *wp++ = '\\';
-                                *wp++ = c;
+                                *wp++ = (char) c;
                             }
                             break;
                     }
                 }
                 else
                 {
-                    *wp++ = c;
+                    *wp++ = (char) c;
                 }
                 break;
 
@@ -665,7 +672,7 @@ int yylex (cf) int cf;
                     if (c)
                     { /* trailing \ is lost */
                         *wp++ = QCHAR;
-                        *wp++ = c;
+                        *wp++ = (char) c;
                     }
                 }
                 else if (c == '\'')
@@ -682,7 +689,7 @@ int yylex (cf) int cf;
                 else
                 {
                     *wp++ = CHAR;
-                    *wp++ = c;
+                    *wp++ = (char) c;
                 }
                 break;
 
@@ -713,7 +720,7 @@ int yylex (cf) int cf;
                         }
                     }
                     *wp++ = CHAR;
-                    *wp++ = c;
+                    *wp++ = (char) c;
                 }
                 break;
 
@@ -738,6 +745,8 @@ int yylex (cf) int cf;
                     goto Sbase1;
                 }
                 break;
+            default:
+                break; // todo: lazy default
         }
     }
     Done:
@@ -874,7 +883,7 @@ int yylex (cf) int cf;
     ungetsc(c);        /* unget terminator */
 
     /* copy word to unprefixed string ident */
-    for (sp = yylval.cp, dp = ident; dp < ident + IDENT && (c = *sp++) == CHAR;)
+    for (sp = yylval.cp, dp = ident; dp < ident + IDENT && (c = (unsigned char) *sp++) == CHAR;)
     {
         *dp++ = *sp++;
     }
@@ -888,14 +897,14 @@ int yylex (cf) int cf;
     if (*ident != '\0' && (cf & (KEYWORD | ALIAS)))
     {
         struct tbl* p;
-        int h = hash(ident);
+        unsigned int h = hash(ident);
 
         /* { */
         if ((cf & KEYWORD) && (p = mytsearch(&keywords, ident, h)) &&
             (!(cf & ESACONLY) || p->val.i == ESAC || p->val.i == '}'))
         {
             afree(yylval.cp, ATEMP);
-            return p->val.i;
+            return (unsigned char) p->val.i;
         }
         if ((cf & ALIAS) && (p = mytsearch(&aliases, ident, h)) && (p->flag & ISSET))
         {
@@ -918,7 +927,7 @@ int yylex (cf) int cf;
     return LWORD;
 }
 
-static void gethere ()
+static void gethere (void)
 {
     struct ioword** p;
 
@@ -933,7 +942,7 @@ static void gethere ()
  * read "<<word" text into temp file
  */
 
-static void readhere (iop) struct ioword* iop;
+static void readhere (struct ioword* iop)
 {
     int c;
     char* volatile eof;
@@ -1027,8 +1036,7 @@ void yyerror (const char* fmt, ...)
  * input for yylex with alias expansion
  */
 
-Source* pushs (type, areap) int type;
-                            Area* areap;
+Source* pushs (int type, Area* areap)
 {
     Source* s;
 
@@ -1055,12 +1063,12 @@ Source* pushs (type, areap) int type;
     return s;
 }
 
-static int getsc__ ()
+static int getsc__ (void)
 {
     Source* s = source;
     int c;
 
-    while ((c = *s->str++) == 0)
+    while ((c = (int) *s->str++) == 0)
     {
         s->str = NULL;        /* return 0 for EOF by default */
         switch (s->type)
@@ -1075,8 +1083,6 @@ static int getsc__ ()
                 break;
 
             case SWSTR:
-                break;
-
             case SSTRING:
                 break;
 
@@ -1133,7 +1139,7 @@ static int getsc__ ()
                     if (c)
                     {
                         s->flags |= SF_ALIASEND;
-                        s->ugbuf[0] = c;
+                        s->ugbuf[0] = (char) c;
                         s->ugbuf[1] = '\0';
                         s->start = s->str = s->ugbuf;
                         s->next = source;
@@ -1172,7 +1178,7 @@ static int getsc__ ()
     return c;
 }
 
-static void getsc_line (s) Source* s;
+static void getsc_line (Source* s)
 {
     char* xp = Xstring(s->xs, xp);
     int interactive = Flag(FTALKING) && s->type == SSTDIN;
@@ -1288,8 +1294,7 @@ static void getsc_line (s) Source* s;
     }
 }
 
-void set_prompt (to, s) int to;
-                        Source* s;
+void set_prompt (int to, Source* s)
 {
     cur_prompt = to;
 
@@ -1308,7 +1313,7 @@ void set_prompt (to, s) int to;
             Area* saved_atemp;
 
             ps1 = str_val(global("PS1"));
-            shf = shf_sopen((char*) 0, strlen(ps1) * 2, SHF_WR | SHF_DYNAMIC, (struct shf*) 0);
+            shf = shf_sopen((char*) 0, (int) strlen(ps1) * 2, SHF_WR | SHF_DYNAMIC, (struct shf*) 0);
             while (*ps1)
             {
                 if (*ps1 != '!' || *++ps1 == '!')
@@ -1347,12 +1352,13 @@ void set_prompt (to, s) int to;
         case PS2: /* command continuation */
             prompt = str_val(global("PS2"));
             break;
+        default:
+            break; //todo: lazy default
     }
 }
 
 /* See also related routine, promptlen() in edit.c */
-void pprompt (cp, ntruncate) const char* cp;
-                             int ntruncate;
+void pprompt (const char* cp, int ntruncate)
 {
 #if 0
     char nbuf[32];
@@ -1395,8 +1401,7 @@ void pprompt (cp, ntruncate) const char* cp;
 /* Read the variable part of a ${...} expression (ie, up to but not including
  * the :[-+?=#%] or close-brace.
  */
-static char* get_brace_var (wsp, wp) XString* wsp;
-                                     char* wp;
+static char* get_brace_var (XString* wsp, char* wp)
 {
     enum parse_state
     {
@@ -1493,7 +1498,7 @@ static char* get_brace_var (wsp, wp) XString* wsp;
  * if eof or newline was found.
  * (Returned string double null terminated)
  */
-static int arraysub (strp) char** strp;
+static int arraysub (char** strp)
 {
     XString ws;
     char* wp;
@@ -1524,7 +1529,7 @@ static int arraysub (strp) char** strp;
 }
 
 /* Unget a char: handles case when we are already at the start of the buffer */
-static const char* ungetsc (c) int c;
+static const char* ungetsc (int c)
 {
     if (backslash_skip)
     {
@@ -1544,7 +1549,7 @@ static const char* ungetsc (c) int c;
         Source* s;
 
         s = pushs(SREREAD, source->areap);
-        s->ugbuf[0] = c;
+        s->ugbuf[0] = (char) c;
         s->ugbuf[1] = '\0';
         s->start = s->str = s->ugbuf;
         s->next = source;
@@ -1555,7 +1560,7 @@ static const char* ungetsc (c) int c;
 
 
 /* Called to get a char that isn't a \newline sequence. */
-static int getsc_bn ARGS((void))
+static int getsc_bn (void)
 {
     int c, c2;
 
@@ -1589,8 +1594,7 @@ static int getsc_bn ARGS((void))
     }
 }
 
-static Lex_state* push_state_ (si, old_end) State_info* si;
-                                            Lex_state* old_end;
+static Lex_state* push_state_ (State_info* si, Lex_state* old_end)
 {
     Lex_state* new = alloc(sizeof(Lex_state) * STATE_BSIZE, ATEMP);
 
@@ -1600,8 +1604,7 @@ static Lex_state* push_state_ (si, old_end) State_info* si;
     return &new[1];
 }
 
-static Lex_state* pop_state_ (si, old_end) State_info* si;
-                                           Lex_state* old_end;
+static Lex_state* pop_state_ (State_info* si, Lex_state* old_end)
 {
     Lex_state* old_base = si->base;
 
