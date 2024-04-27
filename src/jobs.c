@@ -18,9 +18,7 @@
  *	  process groups
  *	- NEED_PGRP_SYNC defined iff JOBS is defined - see comment below
  */
-#include <sys/cdefs.h>
 
-#include <sys/stat.h>
 #include <sys/times.h>
 #include <sys/wait.h>
 
@@ -228,7 +226,7 @@ static void remove_job ARGS((Job * j, const char* where));
 static int kill_job ARGS((Job * j, int sig));
 
 /* initialize job control */
-void j_init (mflagset) int mflagset;
+void j_init (int mflagset)
 {
     child_max = CHILD_MAX; /* so syscon() isn't always being called */
 
@@ -280,7 +278,7 @@ void j_init (mflagset) int mflagset;
 }
 
 /* job cleanup before shell exit */
-void j_exit ()
+void j_exit (void)
 {
     /* kill stopped, and possibly running, jobs */
     Job* j;
@@ -354,7 +352,7 @@ void j_exit ()
 #ifdef JOBS
 
 /* turn job control on or off according to Flag(FMONITOR) */
-void j_change ()
+void j_change (void)
 {
     int i;
 
@@ -475,9 +473,7 @@ void j_change ()
 #endif /* JOBS */
 
 /* execute tree in child subprocess */
-int exchild (t, flags, close_fd) struct op* t;
-                                 int flags;
-                                 int close_fd;    /* used if XPCLOSE or XCCLOSE */
+int exchild (struct op* t, int flags, int close_fd)
 {
     static Proc* last_proc;    /* for pipelines */
 
@@ -759,7 +755,7 @@ int exchild (t, flags, close_fd) struct op* t;
 }
 
 /* start the last job: only used for `command` jobs */
-void startlast ()
+void startlast (void)
 {
     sigset_t omask;
 
@@ -775,7 +771,7 @@ void startlast ()
 }
 
 /* wait for last job: only used for `command` jobs */
-int waitlast ()
+int waitlast (void)
 {
     int rv;
     Job* j;
@@ -806,8 +802,7 @@ int waitlast ()
 }
 
 /* wait for child, interruptable. */
-int waitfor (cp, sigp) const char* cp;
-                       int* sigp;
+int waitfor (const char* cp, int* sigp)
 {
     int rv;
     Job* j;
@@ -872,8 +867,7 @@ int waitfor (cp, sigp) const char* cp;
 }
 
 /* kill (built-in) a job */
-int j_kill (cp, sig) const char* cp;
-                     int sig;
+int j_kill (const char* cp, int sig)
 {
     Job* j;
     int rv = 0;
@@ -919,8 +913,7 @@ int j_kill (cp, sig) const char* cp;
 
 #ifdef JOBS
 /* fg and bg built-ins: called only if Flag(FMONITOR) set */
-int j_resume (cp, bg) const char* cp;
-                      int bg;
+int j_resume (const char* cp, int bg)
 {
     Job* j;
     Proc* p;
@@ -1048,7 +1041,7 @@ int j_resume (cp, bg) const char* cp;
 #endif /* JOBS */
 
 /* are there any running or stopped jobs ? */
-int j_stopped_running ()
+int j_stopped_running (void)
 {
     Job* j;
     int which = 0;
@@ -1079,9 +1072,7 @@ int j_stopped_running ()
 }
 
 /* list jobs for jobs built-in */
-int j_jobs (cp, slp, nflag) const char* cp;
-                            int slp;        /* 0: short, 1: long, 2: pgrp */
-                            int nflag;
+int j_jobs (const char* cp, int slp, int nflag)
 {
     Job* j, * tmp;
     int how;
@@ -1140,7 +1131,7 @@ int j_jobs (cp, slp, nflag) const char* cp;
 }
 
 /* list jobs for top-level notification */
-void j_notify ()
+void j_notify (void)
 {
     Job* j, * tmp;
     sigset_t omask;
@@ -1175,7 +1166,7 @@ void j_notify ()
 }
 
 /* Return pid of last process in last asynchronous job */
-pid_t j_async ()
+pid_t j_async (void)
 {
     sigset_t omask;
 
@@ -1195,7 +1186,7 @@ pid_t j_async ()
  *
  * If jobs are compiled in then this routine expects sigchld to be blocked.
  */
-static void j_set_async (j) Job* j;
+static void j_set_async (Job* j)
 {
     Job* jl, * oldest;
 
@@ -1238,7 +1229,7 @@ static void j_set_async (j) Job* j;
  *
  * If jobs are compiled in then this routine expects sigchld to be blocked.
  */
-static void j_startjob (j) Job* j;
+static void j_startjob (Job* j)
 {
     Proc* p;
 
@@ -1267,9 +1258,7 @@ static void j_startjob (j) Job* j;
  *
  * If jobs are compiled in then this routine expects sigchld to be blocked.
  */
-static int j_waitj (j, flags, where) Job* j;
-                                     int flags;        /* see JW_* */
-                                     const char* where;
+static int j_waitj (Job* j, int flags, const char* where)
 {
     int rv;
 
@@ -1413,7 +1402,7 @@ static int j_waitj (j, flags, where) Job* j;
  *
  * If jobs are compiled in then this routine expects sigchld to be blocked.
  */
-static RETSIGTYPE j_sigchld (sig) int sig;
+static RETSIGTYPE j_sigchld (int sig)
 {
     int errno_ = errno;
     Job* j;
@@ -1496,7 +1485,7 @@ static RETSIGTYPE j_sigchld (sig) int sig;
  *
  * If jobs are compiled in then this routine expects sigchld to be blocked.
  */
-static void check_job (j) Job* j;
+static void check_job (Job* j)
 {
     int jstate;
     Proc* p;
@@ -1621,9 +1610,7 @@ static void check_job (j) Job* j;
  *
  * If jobs are compiled in then this routine expects sigchld to be blocked.
  */
-static void j_print (j, how, shf) Job* j;
-                                  int how;
-                                  struct shf* shf;
+static void j_print (Job* j, int how, struct shf* shf)
 {
     Proc* p;
     int state;
@@ -1761,16 +1748,20 @@ static void j_print (j, how, shf) Job* j;
  *
  * If jobs are compiled in then this routine expects sigchld to be blocked.
  */
-static Job* j_lookup (cp, ecodep) const char* cp;
-                                  int* ecodep;
+static Job* j_lookup (const char* cp, int* ecodep)
 {
     Job* j, * last_match;
     Proc* p;
     int len, job = 0;
+    char *endptr;
 
     if (digit(*cp))
     {
-        job = atoi(cp);
+        job = (int)strtol(cp, &endptr, 10);
+        if (*endptr != '\0') {
+            errorf("jobs.c: j_lookup(1), non-null terminated string.");
+        }
+
         /* Look for last_proc->pid (what $! returns) first... */
         for (j = job_list; j != (Job*) 0; j = j->next)
         {
@@ -1831,7 +1822,10 @@ static Job* j_lookup (cp, ecodep) const char* cp;
         case '7':
         case '8':
         case '9':
-            job = atoi(cp);
+            job = (int)strtol(cp, &endptr, 10);
+            if (*endptr != '\0') {
+                errorf("jobs.c: j_lookup(2), non-null terminated string.");
+            }
             for (j = job_list; j != (Job*) 0; j = j->next)
             {
                 if (j->job == job)
@@ -1868,7 +1862,7 @@ static Job* j_lookup (cp, ecodep) const char* cp;
             break;
 
         default:        /* %string */
-            len = strlen(cp);
+            len = (int) strlen(cp);
             last_match = (Job*) 0;
             for (j = job_list; j != (Job*) 0; j = j->next)
             {
@@ -1906,7 +1900,7 @@ static Proc* free_procs;
  *
  * If jobs are compiled in then this routine expects sigchld to be blocked.
  */
-static Job* new_job ()
+static Job* new_job (void)
 {
     int i;
     Job* newj, * j;
@@ -1941,7 +1935,7 @@ static Job* new_job ()
  *
  * If jobs are compiled in then this routine expects sigchld to be blocked.
  */
-static Proc* new_proc ()
+static Proc* new_proc (void)
 {
     Proc* p;
 
@@ -1963,8 +1957,7 @@ static Proc* new_proc ()
  *
  * If jobs are compiled in then this routine expects sigchld to be blocked.
  */
-static void remove_job (j, where) Job* j;
-                                  const char* where;
+static void remove_job (Job* j, const char* where)
 {
     Proc* p, * tmp;
     Job** prev, * curr;
@@ -2012,8 +2005,7 @@ static void remove_job (j, where) Job* j;
  *
  * If jobs are compiled in then this routine expects sigchld to be blocked.
  */
-static void put_job (j, where) Job* j;
-                               int where;
+static void put_job (Job* j, int where)
 {
     Job** prev, * curr;
 
@@ -2044,6 +2036,8 @@ static void put_job (j, where) Job* j;
             j->next = curr;
             *prev = j;
             break;
+        default:
+            break; // todo: lazy default
     }
 }
 
@@ -2051,8 +2045,7 @@ static void put_job (j, where) Job* j;
  *
  * If jobs are compiled in then this routine expects sigchld to be blocked.
  */
-static int kill_job (j, sig) Job* j;
-                             int sig;
+static int kill_job (Job* j, int sig)
 {
     Proc* p;
     int rval = 0;
